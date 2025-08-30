@@ -1,10 +1,12 @@
 import os; os.system('cls')
 
+import math
 from docx2pdf import convert
 from docx import Document
-from docx.shared import Mm, Pt
+from docx.shared import Mm, Pt, Twips
 from docx.enum.section import WD_ORIENTATION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.table import WD_ROW_HEIGHT_RULE
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
@@ -88,7 +90,8 @@ def normalize_cell(cell, margins=True, paragraph_spacing=True):
 	if margins: set_cell_margins(cell, 0, 0, 0, 0)
 	if paragraph_spacing: zero_paragraph_spacing(cell)
 
-def normalize_p(p, size, top=0, bottom=0):
+def normalize_p(p, size, spacing, top=0, bottom=0):
+	p.paragraph_format.line_spacing = spacing
 	p.paragraph_format.space_before = Pt(top)
 	p.paragraph_format.space_after = Pt(bottom)
 	for run in p.runs:
@@ -96,16 +99,16 @@ def normalize_p(p, size, top=0, bottom=0):
 		run.font.name = GLOBAL_FONT
 
 def remove_blank_p(cell):
-    paragraphs = list(cell.paragraphs)
-    for p in paragraphs:
-        if not p.text.strip():
-            if len(cell.paragraphs) > 1:
-                p._element.getparent().remove(p._element)
+	paragraphs = list(cell.paragraphs)
+	for p in paragraphs:
+		if not p.text.strip():
+			if len(cell.paragraphs) > 1:
+				p._element.getparent().remove(p._element)
 
-def parseText(obj, raw_text, size):
+def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0):
 	text = raw_text.replace('<br><ul>', '<ul>').replace('</ul><br>', '</ul>')
 	p = obj.add_paragraph()
-	normalize_p(p, size)
+	normalize_p(p, size, spacing, ptop, pbottom)
 
 	ctx, intag, txt = [], None, ''
 	for c in text:
@@ -131,20 +134,18 @@ def parseText(obj, raw_text, size):
 				if intag == '/ul':
 					ctx = ctx[:-1]
 					p = obj.add_paragraph(txt)
-					normalize_p(p, size)
+					normalize_p(p, size, spacing, ptop, pbottom)
 				elif intag == 'ul' or intag == 'br':
 					if intag == 'ul':
 						ctx.append('ul')
 					p = obj.add_paragraph(txt, style="List Bullet")
-					normalize_p(p, size)
+					normalize_p(p, size, spacing, ptop, pbottom)
 					fmt = p.paragraph_format
 					n = 16
 					m = 1.5
 
 					fmt.left_indent = Pt(n*m)
 					fmt.first_line_indent = -Pt(n)
-
-					
 			else:
 				if intag.startswith('/') and intag[1:] in ctx:
 					ctx = ctx[::-1]
@@ -154,7 +155,7 @@ def parseText(obj, raw_text, size):
 					# run.add_break()
 					
 					p = obj.add_paragraph(txt)
-					normalize_p(p, size)
+					normalize_p(p, size, spacing, ptop, pbottom)
 				else:
 					ctx.append(intag)
 
@@ -179,7 +180,30 @@ def parseText(obj, raw_text, size):
 			run.font.superscript = True
 
 	remove_blank_p(obj)
-			
+
+def get_row_height(row):
+	row_height = row._tr.trPr.trHeight
+	return (row_height.val, row_height.hRule) if row_height is not None else None
+
+def twipsto(twips: int | float, to: str='mm') -> float:
+	match to:
+		case 'mm':
+			return (127/7200) * twips
+		case 'pt':
+			return twips / 20
+		case _:
+			return twips
+
+def tomm(val: int | float) -> int | float:
+	return val / 36000
+def topt(val: int | float) -> int | float:
+	return val / 12700
+def totwips(val: int | float) -> int | float:
+	return val / 635
+
+def cellMargin(val: int | float) -> int | float:
+	return 300 * val
+
 doc = Document()
 
 style = doc.styles['Normal']
@@ -219,9 +243,39 @@ a5table.cell(0, 2).width = right_half_width
 
 remove_cell_borders(a5table.cell(0, 1))
 normalize_cell(a5table.cell(0, 0))
-# normalize_cell(a5table.cell(0, 2))
+normalize_cell(a5table.cell(0, 2))
 
 set_table_borders(a5table, color='000000', size=4)
+
+info_data = [
+	'''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.''',
+	'''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.''',
+	'''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.''',
+	'''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>'''
+]
+
+info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
+info_table.autofit = True
+info_table.allow_autofit = True
+
+total, infolast = 0, len(info_data) - 1
+for n, (txt, row) in enumerate(zip(info_data, info_table.rows[1:])):
+	normalize_cell(row.cells[0], margins=False)
+	size = 10
+	lines = 1
+
+	set_cell_margins(row.cells[0], 70, 80, 70, 80)
+	if n != infolast:
+		row.height = Pt(size * 1.25 * lines) + cellMargin(140)
+		row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+	row.cells[0].width = right_half_width
+	parseText(row.cells[0], txt, size, 1)
+
+	total += row.height if row.height else Mm(50)
+
+info_table.rows[0].height = a5table.rows[0].height - total
+
+set_table_borders(info_table, color='000000', size=4, outer=False)
 
 # ’
 
@@ -241,55 +295,38 @@ Changes for weekday masses in both parishes will also be announced in due course
 <b>SECOND COLLECTION</b> The next second collection will be the 28/29<s>th</s> June for Peter's Pence.
 ''', '''
 <b>ST NICHOLAS' PRIMARY 1 WELCOME EVENT</b> - <i>Sunday 22<s>nd</s> June from 1 pm to 3 pm</i><br>
-In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and
+In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and 
 meet the P6 buddies. Pre-loved uniforms are available. For children starting in August 2025.
 ''', '''
-<b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL<br>MAURY BUENDÍA VISIT TO GLASGOW</b><br>
+<b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL MAURY BUENDÍA VISIT TO GLASGOW</b><br>
 <b>Sunday 22<s>nd</s> June:</b> Preside at the 12 noon Mass in Saint Andrew's Cathedral.<br>
-<b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross
-Church, then Eucharistic Procession through Village at 4 pm, return to Church for Benediction
+<b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross 
+Church, then Eucharistic Procession through Village at 4 pm, return to Church for Benediction 
 at 5.15 pm.<br>
-<b>Monday 23<s>rd</s> June:</b> Celebrate 1 pm Mass in Saint Andrew's Cathedral.
-The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet
-and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery
+<b>Monday 23<s>rd</s> June:</b> Celebrate 1 pm Mass in Saint Andrew's Cathedral. 
+The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet 
+and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery 
 in Dumbarton, meet with Archdiocesan agencies (Evangelisation, Youth and SCIAF).
 ''', '''
 <b>ABBA'S VINEYARD SACRED HEART PRAYER EVENING</b> - <i>Saturday 28<s>th</s> June from 5-9 pm</i><br>
-For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the
+For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the 
 opportunity for confession, mass and dinner. All are welcome to join at any point. Address -<br>
-Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard.
-For more information and a timetable search @abbasvineyard on social media or email:
+Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard. 
+For more information and a timetable search @abbasvineyard on social media or email: 
 abbasvineyard@gmail.com.
 ''', '''
 <b>NICAEA 2025 - 1700<s>TH</s> ANNIVERSARY OF NICAEA</b> - <i>Sunday 22<s>nd</s> June at 3 pm</i><br>
-Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street.
-Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of
-Nicaea, a cornerstone of Christian history. Experience a service filled with prayer, reflection
-and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part
-of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of
+Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street. 
+Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of 
+Nicaea, a cornerstone of Christian history. Experience a service filled with prayer, reflection 
+and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part 
+of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of 
 Nicaea and its impact on spiritual traditions.
 ''', '''
-<b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind
-parishioners who came to her aid when she took unwell at Saturday night Mass and stayed
+<b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind 
+parishioners who came to her aid when she took unwell at Saturday night Mass and stayed 
 until the ambulance arrived. She is home now and feeling so much better.
-''',
-
-
-	'''<b>EXAMPLE FULL BLOCK HEADER</b><br>Example text blah blah blah...<br>More text idk''',
-	'''a b c d E a b c d E a b c d E a b c d E a b c d E a b c d E a b c d E a b c d E a b c d E a b c d E'''
-	'', '',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><ul>Example bullet 1<br>Example bullet 2<br>Example bullet 3</ul>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2''',
-	'''<b>EXAMPLE FULL BLOCK HEADER 2</b><br>Example text 2 blah blah blah...<br>More text idk v2'''
+'''
 ]
 
 data = [i.replace('\n', '') for i in data]
@@ -300,16 +337,11 @@ data_table.allow_autofit = True
 
 for txt, row in zip(data, data_table.rows):
 	normalize_cell(row.cells[0], margins=False)
-	set_cell_margins(row.cells[0], 150, 80, 100, 40)
+	set_cell_margins(row.cells[0], 100, 80, 100, 80)
 	row.cells[0].width = left_half_width
-	# row.cells[0].vertical_alignment = 1  # center
-	parseText(row.cells[0], txt, 10)
-
-# set_cell_background(data_table.cell(0, 0), '00FF00')
+	parseText(row.cells[0], txt, 10, 1)
 
 set_table_borders(data_table, color='000000', size=4, outer=False)
-# data_table.autofit = False
-# data_table.allow_autofit = False
 
 doc.save('out.docx')
 convert('out.docx', 'out.pdf')
