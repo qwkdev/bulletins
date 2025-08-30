@@ -1,0 +1,92 @@
+{
+    "success": true,
+    "date": "20250831",
+    "readings": [
+        {
+            "type": "reading1",
+            "alt": false,
+            "ref": "Ecclesiasticus 3:19-21,30-31",
+            "title": "Behave humbly, and you will find favour with the Lord",
+            "text": [
+                "My son, be gentle in carrying out your business,",
+                "and you will be better loved than a lavish giver.",
+                "The greater you are, the more you should behave humbly,",
+                "and then you will find favour with the Lord;",
+                "for great though the power of the Lord is,",
+                "he accepts the homage of the humble.",
+                "There is no cure for the proud man\u2019s malady,",
+                "since an evil growth has taken root in him.",
+                "The heart of a sensible man will reflect on parables,",
+                "an attentive ear is the sage\u2019s dream."
+            ]
+        },
+        {
+            "type": "psalm",
+            "alt": false,
+            "ref": "Psalm 67(68):4-7,10-11",
+            "title": null,
+            "text": [
+                "In your goodness, O God, you prepared a home for the poor.",
+                [
+                    "The just shall rejoice at the presence of God,",
+                    "they shall exult and dance for joy.",
+                    "O sing to the Lord, make music to his name;",
+                    "rejoice in the Lord, exult at his presence."
+                ],
+                [
+                    "Father of the orphan, defender of the widow,",
+                    "such is God in his holy place.",
+                    "God gives the lonely a home to live in;",
+                    "he leads the prisoners forth into freedom:"
+                ],
+                [
+                    "You poured down, O God, a generous rain:",
+                    "when your people were starved you gave them new life.",
+                    "It was there that your people found a home,",
+                    "prepared in your goodness, O God, for the poor."
+                ]
+            ]
+        },
+        {
+            "type": "reading2",
+            "alt": false,
+            "ref": "Hebrews 12:18-19,22-24a",
+            "title": "You have come to Mount Zion and to the city of the living God",
+            "text": [
+                "What you have come to is nothing known to the senses: not a blazing fire, or a gloom turning to total darkness, or a storm; or trumpeting thunder or the great voice speaking which made everyone that heard it beg that no more should be said to them. But what you have come to is Mount Zion and the city of the living God, the heavenly Jerusalem where the millions of angels have gathered for the festival, with the whole Church in which everyone is a \u2018first-born son\u2019 and a citizen of heaven. You have come to God himself, the supreme Judge, and been placed with spirits of the saints who have been made perfect; and to Jesus, the mediator who brings a new covenant."
+            ]
+        },
+        {
+            "type": "acclamation",
+            "alt": false,
+            "ref": "Jn14:23",
+            "title": null,
+            "text": [
+                "If anyone loves me he will keep my word,",
+                "and my Father will love him,",
+                "and we shall come to him."
+            ]
+        },
+        {
+            "type": "acclamation",
+            "alt": true,
+            "ref": "Mt11:29",
+            "title": null,
+            "text": [
+                "Shoulder my yoke and learn from me,",
+                "says the Lord,",
+                "for I am gentle and humble in heart."
+            ]
+        },
+        {
+            "type": "gospel",
+            "alt": false,
+            "ref": "Luke 14:1,7-14",
+            "title": "Everyone who exalts himself shall be humbled",
+            "text": [
+                "On a sabbath day Jesus had gone for a meal to the house of one of the leading Pharisees; and they watched him closely. He then told the guests a parable, because he had noticed how they picked the places of honour. He said this, \u2018When someone invites you to a wedding feast, do not take your seat in the place of honour. A more distinguished person than you may have been invited, and the person who invited you both may come and say, \u201cGive up your place to this man.\u201d And then, to your embarrassment, you would have to go and take the lowest place. No; when you are a guest, make your way to the lowest place and sit there, so that, when your host comes, he may say, \u201cMy friend, move up higher.\u201d In that way, everyone with you at the table will see you honoured. For everyone who exalts himself will be humbled, and the man who humbles himself will be exalted.\u2019",
+                "Then he said to his host, \u2018When you give a lunch or a dinner, do not ask your friends, brothers, relations or rich neighbours, for fear they repay your courtesy by inviting you in return. No; when you have a party, invite the poor, the crippled, the lame, the blind; that they cannot pay you back means that you are fortunate, because repayment will be made to you when the virtuous rise again.\u2019"
+            ]
+        }
+    ]
+}
