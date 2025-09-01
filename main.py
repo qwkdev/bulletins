@@ -1,12 +1,14 @@
+import json
 import os; os.system('cls')
 
 import math
 from docx2pdf import convert
 from docx import Document
 from docx.shared import Mm, Pt, Twips
-from docx.enum.section import WD_ORIENTATION
+from docx.enum.section import WD_ORIENTATION, WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_ROW_HEIGHT_RULE
+from docx.enum.table import WD_ROW_HEIGHT_RULE, WD_CELL_VERTICAL_ALIGNMENT
+
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
@@ -98,17 +100,24 @@ def normalize_p(p, size, spacing, top=0, bottom=0):
 		run.font.size = Pt(size)
 		run.font.name = GLOBAL_FONT
 
+def p_has_image(p):
+	for run in p.runs:
+		if run._element.xpath('.//w:drawing | .//w:pict'):
+			return True
+	return False
+
 def remove_blank_p(cell):
 	paragraphs = list(cell.paragraphs)
 	for p in paragraphs:
-		if not p.text.strip():
+		if not p.text.strip() and not p_has_image(p):
 			if len(cell.paragraphs) > 1:
 				p._element.getparent().remove(p._element)
 
-def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0):
+def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False):
 	text = raw_text.replace('<br><ul>', '<ul>').replace('</ul><br>', '</ul>')
 	p = obj.add_paragraph()
-	normalize_p(p, size, spacing, ptop, pbottom)
+	if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+	normalize_p(p, size, spacing, ptop, 0)
 
 	ctx, intag, txt = [], None, ''
 	for c in text:
@@ -134,12 +143,14 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0):
 				if intag == '/ul':
 					ctx = ctx[:-1]
 					p = obj.add_paragraph(txt)
-					normalize_p(p, size, spacing, ptop, pbottom)
+					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+					normalize_p(p, size, spacing)
 				elif intag == 'ul' or intag == 'br':
 					if intag == 'ul':
 						ctx.append('ul')
 					p = obj.add_paragraph(txt, style="List Bullet")
-					normalize_p(p, size, spacing, ptop, pbottom)
+					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+					normalize_p(p, size, spacing)
 					fmt = p.paragraph_format
 					n = 16
 					m = 1.5
@@ -155,7 +166,8 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0):
 					# run.add_break()
 					
 					p = obj.add_paragraph(txt)
-					normalize_p(p, size, spacing, ptop, pbottom)
+					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+					normalize_p(p, size, spacing)
 				else:
 					ctx.append(intag)
 
@@ -178,7 +190,8 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0):
 			run.underline = True
 		elif tag == 's':
 			run.font.superscript = True
-
+	
+	p.paragraph_format.space_after = Pt(pbottom)
 	remove_blank_p(obj)
 
 def get_row_height(row):
@@ -219,7 +232,7 @@ margin = Mm(9)
 section.top_margin = round(margin * 0.8)
 section.bottom_margin = round(margin * 0.8)
 section.left_margin = round(margin * 0.8)
-section.right_margin = round(margin * 1.2)
+section.right_margin = round(margin * 1.3)
 middle_margin = (margin * .9, margin * .4)
 
 left_half_width = round(
@@ -236,6 +249,7 @@ a5table = doc.add_table(rows=1, cols=3)
 a5table.autofit = False
 a5table.allow_autofit = False
 a5table.rows[0].height = section.page_height - section.top_margin - section.bottom_margin
+a5table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
 a5table.cell(0, 0).width = left_half_width
 a5table.cell(0, 1).width = sum(middle_margin)
@@ -248,32 +262,103 @@ normalize_cell(a5table.cell(0, 2))
 set_table_borders(a5table, color='000000', size=4)
 
 info_data = [
-	'''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.''',
-	'''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.''',
-	'''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.''',
-	'''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>'''
+	(1, '''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.'''),
+	(1, '''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.'''),
+	(1, '''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.'''),
+	(1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
 ]
+info_data = [(i[0], i[1].replace('\n', '')) for i in info_data]
 
 info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
 info_table.autofit = True
 info_table.allow_autofit = True
 
-total, infolast = 0, len(info_data) - 1
-for n, (txt, row) in enumerate(zip(info_data, info_table.rows[1:])):
+total = 0
+for n, ((lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
 	normalize_cell(row.cells[0], margins=False)
 	size = 10
-	lines = 1
 
 	set_cell_margins(row.cells[0], 70, 80, 70, 80)
-	if n != infolast:
-		row.height = Pt(size * 1.25 * lines) + cellMargin(140)
+	height = Pt(size * 1.25 * lines) + cellMargin(140)
+	if n != len(info_data) - 1:
+		row.height = height
 		row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 	row.cells[0].width = right_half_width
-	parseText(row.cells[0], txt, size, 1)
+	parseText(row.cells[0], txt, size, 1, center=n == len(info_data) - 1)
 
-	total += row.height if row.height else Mm(50)
+	total += height
+total += height
 
 info_table.rows[0].height = a5table.rows[0].height - total
+front_page = info_table.rows[0].cells[0]
+
+parseText(front_page, '''
+<b>THE MOST HOLY BODY AND BLOOD OF CHRIST<br>
+CORPUS CHRISTI - SUNDAY 22<s>nd</s> JUNE 2025</b>
+'''.replace('\n', ''), 14, 1.3, 20, center=True)
+
+logop = front_page.add_paragraph()
+logop.alignment = WD_ALIGN_PARAGRAPH.CENTER
+normalize_p(logop, size, 1, 5, 0)
+logop.add_run().add_picture('logo.png', width=Mm(54))
+
+parseText(front_page, '''
+<b>Father John Lyons & Deacon Nick Pryce<br>
+Canon Bradburn (visiting)<br>
+St Joseph's RC Church</b>
+'''.replace('\n', ''), 14, 1.2, 13, center=True)
+
+parseText(front_page, '''
+3 Buchanan Street, Milngavie, G62 8DZ<br>
+Phone: 0141 956 1400<br>
+Email: stjoseph.milngavie@rcag.org.uk<br>
+Website: www.stjosephschurchmilngavie.co.uk
+'''.replace('\n', ''), 10, 1.2, 2, center=True)
+
+mass_info = [
+	'''
+<b>SUNDAY MASSES</b><br>
+5.30 pm Saturday Vigil Mass,<br>
+10 am and 11.30 am
+''', '''
+<b>CHILDREN'S LITURGY</b><br>
+Sunday 10 am mass<br>
+(except 2nd Sunday of each month)
+''', '''
+<b>WEEKDAY MASSES</b><br>
+Monday, Wednesday<br>
+and Friday at 9.30 am<br>
+Eucharistic services Tuesday<br>
+and Thursday at 9.30 am
+'''
+]
+mass_info = [i.replace('\n', '') for i in mass_info]
+
+match len(mass_info):
+	case 1:
+		mass_table = front_page.add_table(rows=1, cols=1)
+		mass_table_cells = [mass_table.cell(0, 0)]
+	case 2:
+		mass_table = front_page.add_table(rows=1, cols=2)
+		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(0, 1)]
+	case 3:
+		mass_table = front_page.add_table(rows=2, cols=2)
+		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1).merge(mass_table.cell(1, 1))]
+	case 4:
+		mass_table = front_page.add_table(rows=2, cols=2)
+		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1), mass_table.cell(1, 1)]
+	case _:
+		cols = math.ceil(len(mass_info) / 2)
+		mass_table = front_page.add_table(rows=2, cols=cols)
+		mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
+
+for cell, txt in zip(mass_table_cells, mass_info):
+	normalize_cell(cell, margins=False)
+	cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+	size = 10
+
+	set_cell_margins(cell, 150, 0, 50, 0)
+	parseText(cell, txt, size, 1, center=True)
 
 set_table_borders(info_table, color='000000', size=4, outer=False)
 
@@ -342,6 +427,25 @@ for txt, row in zip(data, data_table.rows):
 	parseText(row.cells[0], txt, 10, 1)
 
 set_table_borders(data_table, color='000000', size=4, outer=False)
+
+#####
+
+with open('readings.json') as f:
+	readings = json.load(f)
+
+if not readings['success']:  #?
+	raise ValueError('Reading data says: success=False')
+
+
+
+
+# reading_page = 
+
+# for reading in readings['readings']:
+# 	if reading['type'] in ['reading1', 'reading2', 'gospel']:
+# 		reading_page.add_table(rows=1, cols=1)
+
+#####
 
 doc.save('out.docx')
 convert('out.docx', 'out.pdf')
