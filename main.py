@@ -113,42 +113,60 @@ def remove_blank_p(cell):
 			if len(cell.paragraphs) > 1:
 				p._element.getparent().remove(p._element)
 
-def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False):
+def add_run(p, txt, size, ctx):
+	run = p.add_run(txt)
+	run.font.size = Pt(size)
+	run.font.name = GLOBAL_FONT
+	for tag in ctx:
+		if tag == 'b':
+			run.bold = True
+		elif tag == 'i':
+			run.italic = True
+		elif tag == 'u':
+			run.underline = True
+		elif tag == 's':
+			run.font.superscript = True
+
+def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False, left_right=None):
+	valid_tags = [
+		'br', '_tab',
+		'b', 'i', 'u', 's', 'ul',
+		'/b', '/i', '/u', '/s', '/ul'
+	]
+
 	text = raw_text.replace('<br><ul>', '<ul>').replace('</ul><br>', '</ul>')
 	p = obj.add_paragraph()
 	if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+	if left_right is not None:
+		p.paragraph_format.tab_stops.add_tab_stop(
+			left_right,
+			WD_ALIGN_PARAGRAPH.RIGHT
+		)
 	normalize_p(p, size, spacing, ptop, 0)
 
 	ctx, intag, txt = [], None, ''
 	for c in text:
 		if c == '<':
+			if intag:
+				txt += '<'+intag
 			intag = ''
 		elif c == '>' and intag:
 			if txt:
-				run = p.add_run(txt)
-				run.font.size = Pt(size)
-				run.font.name = GLOBAL_FONT
+				add_run(p, txt, size, ctx)
 				txt = ''
-				for tag in ctx:
-					if tag == 'b':
-						run.bold = True
-					elif tag == 'i':
-						run.italic = True
-					elif tag == 'u':
-						run.underline = True
-					elif tag == 's':
-						run.font.superscript = True
 			
-			if 'ul' in intag or (ctx and ctx[-1] == 'ul'):
+			if intag not in valid_tags:
+				add_run(p, '<'+intag+'>', size, ctx)
+			elif 'ul' in intag or (ctx and ctx[-1] == 'ul'):
 				if intag == '/ul':
 					ctx = ctx[:-1]
-					p = obj.add_paragraph(txt)
+					p = obj.add_paragraph()
 					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 					normalize_p(p, size, spacing)
 				elif intag == 'ul' or intag == 'br':
 					if intag == 'ul':
 						ctx.append('ul')
-					p = obj.add_paragraph(txt, style="List Bullet")
+					p = obj.add_paragraph(style="List Bullet")
 					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 					normalize_p(p, size, spacing)
 					fmt = p.paragraph_format
@@ -165,9 +183,11 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False):
 				elif intag == 'br':
 					# run.add_break()
 					
-					p = obj.add_paragraph(txt)
+					p = obj.add_paragraph()
 					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 					normalize_p(p, size, spacing)
+				elif left_right is not None and intag == '_tab':
+					p.add_run('\t')
 				else:
 					ctx.append(intag)
 
@@ -178,18 +198,8 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False):
 			else:
 				txt += c
 	
-	run = p.add_run(txt)
-	run.font.size = Pt(size)
-	run.font.name = GLOBAL_FONT
-	for tag in ctx:
-		if tag == 'b':
-			run.bold = True
-		elif tag == 'i':
-			run.italic = True
-		elif tag == 'u':
-			run.underline = True
-		elif tag == 's':
-			run.font.superscript = True
+	add_run(p, txt, size, ctx)
+	if intag: add_run(p, '<'+intag, size, ctx)
 	
 	p.paragraph_format.space_after = Pt(pbottom)
 	remove_blank_p(obj)
@@ -227,13 +237,13 @@ section.orientation = WD_ORIENTATION.LANDSCAPE
 section.page_width = Mm(297)
 section.page_height = Mm(210)
 
-margin = Mm(9)
+margins = Mm(9), Mm(9)
 
-section.top_margin = round(margin * 0.8)
-section.bottom_margin = round(margin * 0.8)
-section.left_margin = round(margin * 0.8)
-section.right_margin = round(margin * 1.3)
-middle_margin = (margin * .9, margin * .4)
+section.top_margin = round(margins[0] * 0.8)
+section.bottom_margin = round(margins[0] * 0.8)
+section.left_margin = round(margins[1] * 0.8)
+section.right_margin = round(margins[1] * 1.3)
+middle_margin = (margins[1] * .9, margins[1] * .4)
 
 left_half_width = round(
 	(section.page_width / 2)
@@ -436,16 +446,72 @@ with open('readings.json') as f:
 if not readings['success']:  #?
 	raise ValueError('Reading data says: success=False')
 
+section2 = doc.add_section(WD_SECTION.NEW_PAGE)
 
+margins = Mm(12), Mm(9)
+section2.top_margin = round(margins[0] * 0.8)
+section2.bottom_margin = 0  # round(margins[0] * 0.8)
+section2.left_margin = round(margins[1] * 0.8)
+section2.right_margin = round(margins[1] * 1.3)
+middle_margin = (margins[1] * .9, margins[1] * .4)
 
+left_half_width = round(
+	(section2.page_width / 2)
+	- section2.left_margin
+	- (middle_margin[0] / 2)
+)
+right_half_width = round(
+	(section2.page_width / 2)
+	- section2.right_margin
+	- (middle_margin[1] / 2)
+)
 
-# reading_page = 
+reading_table = doc.add_table(rows=1, cols=3)
+reading_table.autofit = False
+reading_table.allow_autofit = False
+reading_table.rows[0].height = section2.page_height - section2.top_margin - round(margins[0] * 0.8)
+reading_table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
-# for reading in readings['readings']:
-# 	if reading['type'] in ['reading1', 'reading2', 'gospel']:
-# 		reading_page.add_table(rows=1, cols=1)
+reading_table.cell(0, 0).width = left_half_width
+reading_table.cell(0, 1).width = sum(middle_margin)
+reading_table.cell(0, 2).width = right_half_width
+
+remove_cell_borders(reading_table.cell(0, 1))
+normalize_cell(reading_table.cell(0, 0))
+normalize_cell(reading_table.cell(0, 2))
+
+reading_table.cell(0, 0).add_paragraph('test')
+reading_table.cell(0, 2).add_paragraph('test2')
+
+reading_pages = [reading_table.cell(0, 0 if i < readings['left'] else 2) for i in range(len(readings['readings']))]
+
+#! TODO: Fix text cutoff on right
+
+reading_types = {
+	'reading1': 'FIRST READING',
+	'psalm': 'RESPONSORIAL PSALM',
+	'reading2': 'SECOND READING',
+	'acclamation': 'GOSPEL ACCLAMATION',
+	'gospel': 'GOSPEL'
+}
+for reading_page, reading in zip(reading_pages, readings['readings']):
+	parseText(reading_page, '<b>'
+		+ ('OR' if reading['alt'] else reading_types[reading['type']])
+		+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and reading['sameline'] else '</b>')
+		+ '<_tab><b>'
+		+ reading['ref']
+		+ '</b>',
+	10, 1, left_right=left_half_width)
+	
+	if reading['type'] in ['reading1', 'reading2', 'gospel']:
+		if reading['title']:
+			parseText(reading_page, '<b><i>' + reading['title'] + '</i></b>', 10, 1, left_right=left_half_width)
+
+	
+	reading_page.add_paragraph(reading['ref'])
 
 #####
+
 
 doc.save('out.docx')
 convert('out.docx', 'out.pdf')
