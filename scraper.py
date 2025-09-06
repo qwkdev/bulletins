@@ -16,7 +16,7 @@ def split_list(l: list, sep) -> list[list]:
 
 	return result
 
-DATE = '20250831'
+DATE = '20250907'
 
 rqg = rq.get(f'https://universalis.com/{DATE}/mass.htm')
 soup = BeautifulSoup(rqg.text, 'html.parser')
@@ -75,7 +75,7 @@ final = {
 	'readings': sections
 }
 
-with open('readings.json', 'w', encoding='utf-8') as f:
+with open('readings2.json', 'w', encoding='utf-8') as f:
 	json.dump(final, f, indent=4)
 
 # for section in sections:

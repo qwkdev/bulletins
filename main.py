@@ -1,3 +1,5 @@
+#! NOTE: Section margins must be at least 5mm
+
 import json
 import os; os.system('cls')
 
@@ -13,6 +15,11 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
 GLOBAL_FONT: str = 'Calibri'
+
+fancyq = {
+	"'": ('\u2018', '\u2019'),
+	'"': ('\u201C', '\u201D')
+}
 
 def set_table_borders(table, color='000000', size=4, outer=True):
 	"""
@@ -237,6 +244,7 @@ section.orientation = WD_ORIENTATION.LANDSCAPE
 section.page_width = Mm(297)
 section.page_height = Mm(210)
 
+#?front_page_margins
 margins = Mm(9), Mm(9)
 
 section.top_margin = round(margins[0] * 0.8)
@@ -271,6 +279,7 @@ normalize_cell(a5table.cell(0, 2))
 
 set_table_borders(a5table, color='000000', size=4)
 
+#?info_data
 info_data = [
 	(1, '''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.'''),
 	(1, '''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.'''),
@@ -284,10 +293,10 @@ info_table.autofit = True
 info_table.allow_autofit = True
 
 total = 0
+#?info_size
+size = 10
 for n, ((lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
 	normalize_cell(row.cells[0], margins=False)
-	size = 10
-
 	set_cell_margins(row.cells[0], 70, 80, 70, 80)
 	height = Pt(size * 1.25 * lines) + cellMargin(140)
 	if n != len(info_data) - 1:
@@ -302,29 +311,36 @@ total += height
 info_table.rows[0].height = a5table.rows[0].height - total
 front_page = info_table.rows[0].cells[0]
 
+#?title
 parseText(front_page, '''
 <b>THE MOST HOLY BODY AND BLOOD OF CHRIST<br>
 CORPUS CHRISTI - SUNDAY 22<s>nd</s> JUNE 2025</b>
 '''.replace('\n', ''), 14, 1.3, 20, center=True)
+#?title_size           ^^
 
 logop = front_page.add_paragraph()
 logop.alignment = WD_ALIGN_PARAGRAPH.CENTER
-normalize_p(logop, size, 1, 5, 0)
+normalize_p(logop, 1, 1, 5, 0)
 logop.add_run().add_picture('logo.png', width=Mm(54))
 
+#?church_title
 parseText(front_page, '''
 <b>Father John Lyons & Deacon Nick Pryce<br>
 Canon Bradburn (visiting)<br>
 St Joseph's RC Church</b>
 '''.replace('\n', ''), 14, 1.2, 13, center=True)
+#?title_size           ^^
 
+#?church_info
 parseText(front_page, '''
 3 Buchanan Street, Milngavie, G62 8DZ<br>
 Phone: 0141 956 1400<br>
 Email: stjoseph.milngavie@rcag.org.uk<br>
 Website: www.stjosephschurchmilngavie.co.uk
 '''.replace('\n', ''), 10, 1.2, 2, center=True)
+#?church_info_size     ^^
 
+#?mass_info
 mass_info = [
 	'''
 <b>SUNDAY MASSES</b><br>
@@ -362,18 +378,18 @@ match len(mass_info):
 		mass_table = front_page.add_table(rows=2, cols=cols)
 		mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
 
+#?mass_info_size
+size = 10
 for cell, txt in zip(mass_table_cells, mass_info):
 	normalize_cell(cell, margins=False)
 	cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-	size = 10
 
 	set_cell_margins(cell, 150, 0, 50, 0)
 	parseText(cell, txt, size, 1, center=True)
 
 set_table_borders(info_table, color='000000', size=4, outer=False)
 
-# ’
-
+#?data
 data = [
 	'''
 <b>MASS TIMES IN OUR PASTORAL AREA</b><br>
@@ -434,26 +450,31 @@ for txt, row in zip(data, data_table.rows):
 	normalize_cell(row.cells[0], margins=False)
 	set_cell_margins(row.cells[0], 100, 80, 100, 80)
 	row.cells[0].width = left_half_width
+	#?data
 	parseText(row.cells[0], txt, 10, 1)
 
 set_table_borders(data_table, color='000000', size=4, outer=False)
 
 #####
 
+#?readings
 with open('readings.json') as f:
 	readings = json.load(f)
 
-if not readings['success']:  #?
+if not readings['success']:  #*
 	raise ValueError('Reading data says: success=False')
 
 section2 = doc.add_section(WD_SECTION.NEW_PAGE)
 
-margins = Mm(12), Mm(9)
-section2.top_margin = round(margins[0] * 0.8)
-section2.bottom_margin = 0  # round(margins[0] * 0.8)
-section2.left_margin = round(margins[1] * 0.8)
-section2.right_margin = round(margins[1] * 1.3)
-middle_margin = (margins[1] * .9, margins[1] * .4)
+#?reading_margins
+reading_top_margin = Mm(10)
+reading_margin = Mm(9)
+
+section2.top_margin = reading_top_margin
+section2.bottom_margin = 0
+section2.left_margin = round(reading_margin * 0.8)
+section2.right_margin = round(reading_margin * 1.3)
+middle_margin = (reading_margin * .9, reading_margin * .4)
 
 left_half_width = round(
 	(section2.page_width / 2)
@@ -469,7 +490,7 @@ right_half_width = round(
 reading_table = doc.add_table(rows=1, cols=3)
 reading_table.autofit = False
 reading_table.allow_autofit = False
-reading_table.rows[0].height = section2.page_height - section2.top_margin - round(margins[0] * 0.8)
+reading_table.rows[0].height = section2.page_height - reading_top_margin - Mm(8)
 reading_table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
 reading_table.cell(0, 0).width = left_half_width
@@ -479,9 +500,6 @@ reading_table.cell(0, 2).width = right_half_width
 remove_cell_borders(reading_table.cell(0, 1))
 normalize_cell(reading_table.cell(0, 0))
 normalize_cell(reading_table.cell(0, 2))
-
-reading_table.cell(0, 0).add_paragraph('test')
-reading_table.cell(0, 2).add_paragraph('test2')
 
 reading_pages = [reading_table.cell(0, 0 if i < readings['left'] else 2) for i in range(len(readings['readings']))]
 
@@ -494,24 +512,73 @@ reading_types = {
 	'acclamation': 'GOSPEL ACCLAMATION',
 	'gospel': 'GOSPEL'
 }
+
+#?reading_heading_spacing
+line_spacing = 5
+#?reading_heading_size
+heading_size = 11
 for reading_page, reading in zip(reading_pages, readings['readings']):
+	#?readings
+	text_size = 11
+	#?readings
+	bottom_spacing = 20
+
 	parseText(reading_page, '<b>'
 		+ ('OR' if reading['alt'] else reading_types[reading['type']])
-		+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and reading['sameline'] else '</b>')
+		+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
 		+ '<_tab><b>'
 		+ reading['ref']
 		+ '</b>',
-	10, 1, left_right=left_half_width)
+	heading_size, 1, pbottom=line_spacing, left_right=left_half_width)
 	
 	if reading['type'] in ['reading1', 'reading2', 'gospel']:
 		if reading['title']:
-			parseText(reading_page, '<b><i>' + reading['title'] + '</i></b>', 10, 1, left_right=left_half_width)
+			parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', heading_size, 1, pbottom=line_spacing)
+			parseText(reading_page, ' '.join(reading['text']), text_size, 1, pbottom=bottom_spacing)
+	elif reading['type'] in ['psalm', 'acclamation'] and not reading['alt']:
+		if not reading['sameline'] and not reading['alt']:
+			parseText(reading_page, '<i>wording may differ if sung</i>', heading_size, 1, pbottom=line_spacing)
 
-	
-	reading_page.add_paragraph(reading['ref'])
+		if reading['type'] == 'psalm':
+			parseText(reading_page, '<b>' + reading['text'][0] + '</b>', text_size, 1, pbottom=line_spacing)
+			parseText(reading_page, '<br>\u2800<br>'.join(['<br>'.join(verse) for verse in reading['text'][1:]]), text_size, 1, pbottom=bottom_spacing)
+		else: # acclamation
+			parseText(reading_page, '<br>'.join(['<b>Alleluia, alleluia.</b>', *reading['text'], '<b>Alleluia.</b>']), text_size, 1, pbottom=bottom_spacing)
+
+#?copyright_size
+copyright_size = 9
+#?copyright_spacing
+copyright_spacing = 20
+
+parseText(reading_table.cell(0, 0 if readings['copyright'] == 0 else 2), 
+	'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
+	copyright_size, 1, pbottom=copyright_spacing)
+parseText(reading_table.cell(0, 0 if readings['dpa'] == 0 else 2), 
+	'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
+	copyright_size, 1)
 
 #####
 
-
 doc.save('out.docx')
 convert('out.docx', 'out.pdf')
+
+def main(
+	front_page_margins: tuple[int | float, int | float],
+	info_data: list[tuple[int, str]],
+	info_size: int | float,
+	title: str,
+	title_size: int | float,
+	church_title: str,
+	church_info: str,
+	church_info_size: int | float,
+	mass_info: list[str],
+	mass_info_size: int | float,
+	data: list[tuple[int | float, str]],
+	readings: dict,
+	reading_margins: tuple[int | float, int | float],
+	reading_heading_spacing: int | float,
+	reading_heading_size: int | float,
+	copyright_size: int | float,
+	copyright_spacing: int | float
+):
+	...
