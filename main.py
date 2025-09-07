@@ -22,17 +22,6 @@ fancyq = {
 }
 
 def set_table_borders(table, color='000000', size=4, outer=True):
-	"""
-	Apply borders to a whole table.
-	color = hex RGB (e.g. "FF0000" for red)
-	size = border size in 1/8 pt (e.g. 8 = 1pt)
-	"""
-	tblPr = table._element.tblPr
-	# for el in tblPr.findall(qn("w:tblBorders")):
-	# 	tblPr.remove(el)
-	# for el in tblPr.findall(qn("w:tblStyle")):
-	# 	tblPr.remove(el)
-
 	tblBorders = OxmlElement('w:tblBorders')
 	for border_name in (*(['top', 'left', 'bottom', 'right'] if outer else []), 'insideH', 'insideV'):
 		border = OxmlElement(f'w:{border_name}')
@@ -41,7 +30,7 @@ def set_table_borders(table, color='000000', size=4, outer=True):
 		border.set(qn('w:space'), '0')
 		border.set(qn('w:color'), color)
 		tblBorders.append(border)
-	tblPr.append(tblBorders)
+	table._element.tblPr.append(tblBorders)
 
 def remove_cell_borders(cell):
 	tcPr = cell._element.tcPr
@@ -56,7 +45,6 @@ def remove_cell_borders(cell):
 	tcPr.append(tcBorders)
 
 def set_cell_margins(cell, top=0, start=0, bottom=0, end=0):
-	"""Sets all cell padding (in twips)"""
 	tcPr = cell._element.tcPr
 	tcMar = tcPr.find(qn('w:tcMar'))
 	if tcMar is None:
@@ -70,11 +58,7 @@ def set_cell_margins(cell, top=0, start=0, bottom=0, end=0):
 		el.set(qn('w:w'), str(size))
 		el.set(qn('w:type'), 'dxa')
 
-def set_cell_background(cell, color="FFFF00"):
-	"""
-	Set the background color of a cell.
-	color = RGB hex string, e.g. "FF0000" for red
-	"""
+def set_cell_background(cell, color: str='000000'):
 	tc = cell._element
 	tcPr = tc.get_or_add_tcPr()
 	shd = tcPr.find(qn('w:shd'))
@@ -83,19 +67,17 @@ def set_cell_background(cell, color="FFFF00"):
 		tcPr.append(shd)
 	shd.set(qn('w:val'), 'clear')
 	shd.set(qn('w:color'), 'auto')
-	shd.set(qn('w:fill'), color)  # this is the background fill
+	shd.set(qn('w:fill'), color)
 
 def zero_paragraph_spacing(cell):
-	"""Remove spacing before and after all paragraphs in a cell."""
-	for paragraph in cell.paragraphs:
-		paragraph.paragraph_format.space_before = 0
-		paragraph.paragraph_format.space_after = 0
-		paragraph.paragraph_format.line_spacing = 1  # optional
+	for p in cell.paragraphs:
+		p.paragraph_format.space_before = 0
+		p.paragraph_format.space_after = 0
+		p.paragraph_format.line_spacing = 1
 
 def normalize_cell(cell, margins=True, paragraph_spacing=True):
-	p = cell.paragraphs[0]
-	cell._tc.remove(p._p)
-
+	'''Warning: Doesn't work on empty cells.'''
+	cell._tc.remove(cell.paragraphs[0]._p)
 	if margins: set_cell_margins(cell, 0, 0, 0, 0)
 	if paragraph_spacing: zero_paragraph_spacing(cell)
 
@@ -188,8 +170,6 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False, lef
 					ctx.remove(intag[1:])
 					ctx = ctx[::-1]
 				elif intag == 'br':
-					# run.add_break()
-					
 					p = obj.add_paragraph()
 					if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 					normalize_p(p, size, spacing)
@@ -215,134 +195,268 @@ def get_row_height(row):
 	row_height = row._tr.trPr.trHeight
 	return (row_height.val, row_height.hRule) if row_height is not None else None
 
-def twipsto(twips: int | float, to: str='mm') -> float:
-	match to:
-		case 'mm':
-			return (127/7200) * twips
-		case 'pt':
-			return twips / 20
-		case _:
-			return twips
-
 def tomm(val: int | float) -> int | float:
 	return val / 36000
 def topt(val: int | float) -> int | float:
 	return val / 12700
 def totwips(val: int | float) -> int | float:
 	return val / 635
-
 def cellMargin(val: int | float) -> int | float:
 	return 300 * val
 
-doc = Document()
+def main(
+	front_page_margins: tuple[int | float, int | float],
+	info_data: list[tuple[int, str]],
+	info_size: int | float,
+	title: str,
+	title_size: int | float,
+	church_title: str,
+	church_title_size: int | float,
+	church_info: str,
+	church_info_size: int | float,
+	mass_info: list[str],
+	mass_info_size: int | float,
+	data: list[tuple[int | float, str]],
+	readings: dict,
+	reading_margins: tuple[int | float, int | float],
+	reading_heading_spacing: int | float,
+	reading_heading_size: int | float,
+	copyright_size: int | float,
+	copyright_spacing: int | float
+):
+	doc = Document()
 
-style = doc.styles['Normal']
-style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+	style = doc.styles['Normal']
+	style.paragraph_format.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
-section = doc.sections[0]
-section.orientation = WD_ORIENTATION.LANDSCAPE
-section.page_width = Mm(297)
-section.page_height = Mm(210)
+	section = doc.sections[0]
+	section.orientation = WD_ORIENTATION.LANDSCAPE
+	section.page_width = Mm(297)
+	section.page_height = Mm(210)
 
-#?front_page_margins
-margins = Mm(9), Mm(9)
+	margins = Mm(front_page_margins[0]), Mm(front_page_margins[1])
 
-section.top_margin = round(margins[0] * 0.8)
-section.bottom_margin = round(margins[0] * 0.8)
-section.left_margin = round(margins[1] * 0.8)
-section.right_margin = round(margins[1] * 1.3)
-middle_margin = (margins[1] * .9, margins[1] * .4)
+	section.top_margin = round(margins[0] * 0.8)
+	section.bottom_margin = round(margins[0] * 0.8)
+	section.left_margin = round(margins[1] * 0.8)
+	section.right_margin = round(margins[1] * 1.3)
+	middle_margin = (margins[1] * .9, margins[1] * .4)
 
-left_half_width = round(
-	(section.page_width / 2)
-	- section.left_margin
-	- (middle_margin[0] / 2)
-)
-right_half_width = round(
-	(section.page_width / 2)
-	- section.right_margin
-	- (middle_margin[1] / 2)
-)
-a5table = doc.add_table(rows=1, cols=3)
-a5table.autofit = False
-a5table.allow_autofit = False
-a5table.rows[0].height = section.page_height - section.top_margin - section.bottom_margin
-a5table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+	left_half_width = round(
+		(section.page_width / 2)
+		- section.left_margin
+		- (middle_margin[0] / 2)
+	)
+	right_half_width = round(
+		(section.page_width / 2)
+		- section.right_margin
+		- (middle_margin[1] / 2)
+	)
+	a5table = doc.add_table(rows=1, cols=3)
+	a5table.autofit = False
+	a5table.allow_autofit = False
+	a5table.rows[0].height = section.page_height - section.top_margin - section.bottom_margin
+	a5table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
-a5table.cell(0, 0).width = left_half_width
-a5table.cell(0, 1).width = sum(middle_margin)
-a5table.cell(0, 2).width = right_half_width
+	a5table.cell(0, 0).width = left_half_width
+	a5table.cell(0, 1).width = sum(middle_margin)
+	a5table.cell(0, 2).width = right_half_width
 
-remove_cell_borders(a5table.cell(0, 1))
-normalize_cell(a5table.cell(0, 0))
-normalize_cell(a5table.cell(0, 2))
+	remove_cell_borders(a5table.cell(0, 1))
+	normalize_cell(a5table.cell(0, 0))
+	normalize_cell(a5table.cell(0, 2))
 
-set_table_borders(a5table, color='000000', size=4)
+	set_table_borders(a5table, color='000000', size=4)
 
-#?info_data
-info_data = [
-	(1, '''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.'''),
-	(1, '''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.'''),
-	(1, '''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.'''),
-	(1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
-]
-info_data = [(i[0], i[1].replace('\n', '')) for i in info_data]
+	info_data = [(i[0], i[1].replace('\n', '')) for i in info_data]
 
-info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
-info_table.autofit = True
-info_table.allow_autofit = True
+	info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
+	info_table.autofit = True
+	info_table.allow_autofit = True
 
-total = 0
-#?info_size
-size = 10
-for n, ((lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
-	normalize_cell(row.cells[0], margins=False)
-	set_cell_margins(row.cells[0], 70, 80, 70, 80)
-	height = Pt(size * 1.25 * lines) + cellMargin(140)
-	if n != len(info_data) - 1:
-		row.height = height
-		row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-	row.cells[0].width = right_half_width
-	parseText(row.cells[0], txt, size, 1, center=n == len(info_data) - 1)
+	total = 0
+	for n, ((lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
+		normalize_cell(row.cells[0], margins=False)
+		set_cell_margins(row.cells[0], 70, 80, 70, 80)
+		height = Pt(info_size * 1.25 * lines) + cellMargin(140)
+		if n != len(info_data) - 1:
+			row.height = height
+			row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+		row.cells[0].width = right_half_width
+		parseText(row.cells[0], txt, info_size, 1, center=n == len(info_data) - 1)
 
+		total += height
 	total += height
-total += height
 
-info_table.rows[0].height = a5table.rows[0].height - total
-front_page = info_table.rows[0].cells[0]
+	info_table.rows[0].height = a5table.rows[0].height - total
+	front_page = info_table.rows[0].cells[0]
 
-#?title
-parseText(front_page, '''
+	parseText(front_page, title.replace('\n', ''), title_size, 1.3, 20, center=True)
+
+	logop = front_page.add_paragraph()
+	logop.alignment = WD_ALIGN_PARAGRAPH.CENTER
+	normalize_p(logop, 1, 1, 5, 0)
+	logop.add_run().add_picture('logo.png', width=Mm(54))
+
+	parseText(front_page, church_title.replace('\n', ''), church_title_size, 1.2, 13, center=True)
+	parseText(front_page, church_info.replace('\n', ''), church_info_size, 1.2, 2, center=True)
+
+	mass_info = [i.replace('\n', '') for i in mass_info]
+
+	match len(mass_info):
+		case 1:
+			mass_table = front_page.add_table(rows=1, cols=1)
+			mass_table_cells = [mass_table.cell(0, 0)]
+		case 2:
+			mass_table = front_page.add_table(rows=1, cols=2)
+			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(0, 1)]
+		case 3:
+			mass_table = front_page.add_table(rows=2, cols=2)
+			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1).merge(mass_table.cell(1, 1))]
+		case 4:
+			mass_table = front_page.add_table(rows=2, cols=2)
+			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1), mass_table.cell(1, 1)]
+		case _:
+			cols = math.ceil(len(mass_info) / 2)
+			mass_table = front_page.add_table(rows=2, cols=cols)
+			mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
+
+	for cell, txt in zip(mass_table_cells, mass_info):
+		normalize_cell(cell, margins=False)
+		cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+
+		set_cell_margins(cell, 150, 0, 50, 0)
+		parseText(cell, txt, mass_info_size, 1, center=True)
+
+	set_table_borders(info_table, color='000000', size=4, outer=False)
+
+	data = [(i[0], i[1].replace('\n', '')) for i in data]
+
+	data_table = a5table.cell(0, 0).add_table(rows=len(data), cols=1)
+	data_table.autofit = True
+	data_table.allow_autofit = True
+
+	for (size, txt), row in zip(data, data_table.rows):
+		normalize_cell(row.cells[0], margins=False)
+		set_cell_margins(row.cells[0], 100, 80, 100, 80)
+		row.cells[0].width = left_half_width
+		parseText(row.cells[0], txt, size, 1)
+
+	set_table_borders(data_table, color='000000', size=4, outer=False)
+
+	section2 = doc.add_section(WD_SECTION.NEW_PAGE)
+
+	reading_top_margin = Mm(reading_margins[0])
+	reading_margin = Mm(reading_margins[1])
+
+	section2.top_margin = reading_top_margin
+	section2.bottom_margin = 0
+	section2.left_margin = round(reading_margin * 0.8)
+	section2.right_margin = round(reading_margin * 1.3)
+	middle_margin = (reading_margin * .9, reading_margin * .4)
+
+	left_half_width = round(
+		(section2.page_width / 2)
+		- section2.left_margin
+		- (middle_margin[0] / 2)
+	)
+	right_half_width = round(
+		(section2.page_width / 2)
+		- section2.right_margin
+		- (middle_margin[1] / 2)
+	)
+
+	reading_table = doc.add_table(rows=1, cols=3)
+	reading_table.autofit = False
+	reading_table.allow_autofit = False
+	reading_table.rows[0].height = section2.page_height - reading_top_margin - Mm(8)
+	reading_table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+
+	reading_table.cell(0, 0).width = left_half_width
+	reading_table.cell(0, 1).width = sum(middle_margin)
+	reading_table.cell(0, 2).width = right_half_width
+
+	remove_cell_borders(reading_table.cell(0, 1))
+	normalize_cell(reading_table.cell(0, 0))
+	normalize_cell(reading_table.cell(0, 2))
+
+	reading_pages = [reading_table.cell(0, 0 if i < readings['left'] else 2) for i in range(len(readings['readings']))]
+
+	reading_types = {
+		'reading1': 'FIRST READING',
+		'psalm': 'RESPONSORIAL PSALM',
+		'reading2': 'SECOND READING',
+		'acclamation': 'GOSPEL ACCLAMATION',
+		'gospel': 'GOSPEL'
+	}
+
+	for reading_page, reading in zip(reading_pages, readings['readings']):
+		parseText(reading_page, '<b>'
+			+ ('OR' if reading['alt'] else reading_types[reading['type']])
+			+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
+			+ '<_tab><b>'
+			+ reading['ref']
+			+ '</b>',
+		reading_heading_size, 1, pbottom=reading_heading_spacing, left_right=left_half_width)
+		
+		if reading['type'] in ['reading1', 'reading2', 'gospel']:
+			if reading['title']:
+				parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
+				parseText(reading_page, ' '.join(reading['text']), reading['size'], 1, pbottom=reading['margin'])
+		elif reading['type'] in ['psalm', 'acclamation'] and not reading['alt']:
+			if not reading['sameline'] and not reading['alt']:
+				parseText(reading_page, '<i>wording may differ if sung</i>', reading_heading_size, 1, pbottom=reading_heading_spacing)
+
+			if reading['type'] == 'psalm':
+				parseText(reading_page, '<b>' + reading['text'][0] + '</b>', reading['size'], 1, pbottom=reading_heading_spacing)
+				parseText(reading_page, '<br>\u2800<br>'.join(['<br>'.join(verse) for verse in reading['text'][1:]]), reading['size'], 1, pbottom=reading['margin'])
+			else: # acclamation
+				parseText(reading_page, '<br>'.join(['<b>Alleluia, alleluia.</b>', *reading['text'], '<b>Alleluia.</b>']), reading['size'], 1, pbottom=reading['margin'])
+
+	parseText(reading_table.cell(0, 0 if readings['copyright'] == 0 else 2), 
+		'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
+		copyright_size, 1, pbottom=copyright_spacing)
+	parseText(reading_table.cell(0, 0 if readings['dpa'] == 0 else 2), 
+		'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
+		copyright_size, 1)
+
+	doc.save('out.docx')
+	convert('out.docx', 'out.pdf')
+
+with open('readings.json') as f:
+	readings = json.load(f)
+if not readings['success']:
+	raise ValueError('Reading data says: success=False')
+
+main(
+	front_page_margins=(9, 9),
+	info_data=[
+		(1, '''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.'''),
+		(1, '''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.'''),
+		(1, '''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.'''),
+		(1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
+	],
+	info_size=10,
+	title='''
 <b>THE MOST HOLY BODY AND BLOOD OF CHRIST<br>
 CORPUS CHRISTI - SUNDAY 22<s>nd</s> JUNE 2025</b>
-'''.replace('\n', ''), 14, 1.3, 20, center=True)
-#?title_size           ^^
-
-logop = front_page.add_paragraph()
-logop.alignment = WD_ALIGN_PARAGRAPH.CENTER
-normalize_p(logop, 1, 1, 5, 0)
-logop.add_run().add_picture('logo.png', width=Mm(54))
-
-#?church_title
-parseText(front_page, '''
+''',
+	title_size=14,
+	church_title='''
 <b>Father John Lyons & Deacon Nick Pryce<br>
 Canon Bradburn (visiting)<br>
 St Joseph's RC Church</b>
-'''.replace('\n', ''), 14, 1.2, 13, center=True)
-#?title_size           ^^
-
-#?church_info
-parseText(front_page, '''
+''',
+	church_title_size=14,
+	church_info='''
 3 Buchanan Street, Milngavie, G62 8DZ<br>
 Phone: 0141 956 1400<br>
 Email: stjoseph.milngavie@rcag.org.uk<br>
 Website: www.stjosephschurchmilngavie.co.uk
-'''.replace('\n', ''), 10, 1.2, 2, center=True)
-#?church_info_size     ^^
-
-#?mass_info
-mass_info = [
-	'''
+''',
+	church_info_size=10,
+	mass_info=[
+'''
 <b>SUNDAY MASSES</b><br>
 5.30 pm Saturday Vigil Mass,<br>
 10 am and 11.30 am
@@ -357,41 +471,10 @@ and Friday at 9.30 am<br>
 Eucharistic services Tuesday<br>
 and Thursday at 9.30 am
 '''
-]
-mass_info = [i.replace('\n', '') for i in mass_info]
-
-match len(mass_info):
-	case 1:
-		mass_table = front_page.add_table(rows=1, cols=1)
-		mass_table_cells = [mass_table.cell(0, 0)]
-	case 2:
-		mass_table = front_page.add_table(rows=1, cols=2)
-		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(0, 1)]
-	case 3:
-		mass_table = front_page.add_table(rows=2, cols=2)
-		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1).merge(mass_table.cell(1, 1))]
-	case 4:
-		mass_table = front_page.add_table(rows=2, cols=2)
-		mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1), mass_table.cell(1, 1)]
-	case _:
-		cols = math.ceil(len(mass_info) / 2)
-		mass_table = front_page.add_table(rows=2, cols=cols)
-		mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
-
-#?mass_info_size
-size = 10
-for cell, txt in zip(mass_table_cells, mass_info):
-	normalize_cell(cell, margins=False)
-	cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-
-	set_cell_margins(cell, 150, 0, 50, 0)
-	parseText(cell, txt, size, 1, center=True)
-
-set_table_borders(info_table, color='000000', size=4, outer=False)
-
-#?data
-data = [
-	'''
+	],
+	mass_info_size=10,
+	data=[
+(10, '''
 <b>MASS TIMES IN OUR PASTORAL AREA</b><br>
 Mass times are changing in our pastoral area from the <b>12<s>th</s> July</b> they will be:<br>
 <ul>
@@ -402,13 +485,13 @@ This change has become necessary due to Father John's illness and due to a lack 
 priests in the archdiocese. This change has been approved by the Archbishop and the Dean, 
 and will continue for the foreseeable future. We appreciate your understanding here.<br>
 Changes for weekday masses in both parishes will also be announced in due course.
-''', '''
+'''), (10, '''
 <b>SECOND COLLECTION</b> The next second collection will be the 28/29<s>th</s> June for Peter's Pence.
-''', '''
+'''), (10, '''
 <b>ST NICHOLAS' PRIMARY 1 WELCOME EVENT</b> - <i>Sunday 22<s>nd</s> June from 1 pm to 3 pm</i><br>
 In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and 
 meet the P6 buddies. Pre-loved uniforms are available. For children starting in August 2025.
-''', '''
+'''), (10, '''
 <b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL MAURY BUENDÍA VISIT TO GLASGOW</b><br>
 <b>Sunday 22<s>nd</s> June:</b> Preside at the 12 noon Mass in Saint Andrew's Cathedral.<br>
 <b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross 
@@ -418,14 +501,14 @@ at 5.15 pm.<br>
 The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet 
 and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery 
 in Dumbarton, meet with Archdiocesan agencies (Evangelisation, Youth and SCIAF).
-''', '''
+'''), (10, '''
 <b>ABBA'S VINEYARD SACRED HEART PRAYER EVENING</b> - <i>Saturday 28<s>th</s> June from 5-9 pm</i><br>
 For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the 
 opportunity for confession, mass and dinner. All are welcome to join at any point. Address -<br>
 Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard. 
 For more information and a timetable search @abbasvineyard on social media or email: 
 abbasvineyard@gmail.com.
-''', '''
+'''), (10, '''
 <b>NICAEA 2025 - 1700<s>TH</s> ANNIVERSARY OF NICAEA</b> - <i>Sunday 22<s>nd</s> June at 3 pm</i><br>
 Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street. 
 Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of 
@@ -433,152 +516,16 @@ Nicaea, a cornerstone of Christian history. Experience a service filled with pra
 and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part 
 of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of 
 Nicaea and its impact on spiritual traditions.
-''', '''
+'''), (10, '''
 <b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind 
 parishioners who came to her aid when she took unwell at Saturday night Mass and stayed 
 until the ambulance arrived. She is home now and feeling so much better.
-'''
-]
-
-data = [i.replace('\n', '') for i in data]
-
-data_table = a5table.cell(0, 0).add_table(rows=len(data), cols=1)
-data_table.autofit = True
-data_table.allow_autofit = True
-
-for txt, row in zip(data, data_table.rows):
-	normalize_cell(row.cells[0], margins=False)
-	set_cell_margins(row.cells[0], 100, 80, 100, 80)
-	row.cells[0].width = left_half_width
-	#?data
-	parseText(row.cells[0], txt, 10, 1)
-
-set_table_borders(data_table, color='000000', size=4, outer=False)
-
-#####
-
-#?readings
-with open('readings.json') as f:
-	readings = json.load(f)
-
-if not readings['success']:  #*
-	raise ValueError('Reading data says: success=False')
-
-section2 = doc.add_section(WD_SECTION.NEW_PAGE)
-
-#?reading_margins
-reading_top_margin = Mm(10)
-reading_margin = Mm(9)
-
-section2.top_margin = reading_top_margin
-section2.bottom_margin = 0
-section2.left_margin = round(reading_margin * 0.8)
-section2.right_margin = round(reading_margin * 1.3)
-middle_margin = (reading_margin * .9, reading_margin * .4)
-
-left_half_width = round(
-	(section2.page_width / 2)
-	- section2.left_margin
-	- (middle_margin[0] / 2)
+''')
+	],
+	readings=readings,
+	reading_margins=(10, 9),
+	reading_heading_spacing=5,
+	reading_heading_size=11,
+	copyright_size=9,
+	copyright_spacing=20
 )
-right_half_width = round(
-	(section2.page_width / 2)
-	- section2.right_margin
-	- (middle_margin[1] / 2)
-)
-
-reading_table = doc.add_table(rows=1, cols=3)
-reading_table.autofit = False
-reading_table.allow_autofit = False
-reading_table.rows[0].height = section2.page_height - reading_top_margin - Mm(8)
-reading_table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-
-reading_table.cell(0, 0).width = left_half_width
-reading_table.cell(0, 1).width = sum(middle_margin)
-reading_table.cell(0, 2).width = right_half_width
-
-remove_cell_borders(reading_table.cell(0, 1))
-normalize_cell(reading_table.cell(0, 0))
-normalize_cell(reading_table.cell(0, 2))
-
-reading_pages = [reading_table.cell(0, 0 if i < readings['left'] else 2) for i in range(len(readings['readings']))]
-
-#! TODO: Fix text cutoff on right
-
-reading_types = {
-	'reading1': 'FIRST READING',
-	'psalm': 'RESPONSORIAL PSALM',
-	'reading2': 'SECOND READING',
-	'acclamation': 'GOSPEL ACCLAMATION',
-	'gospel': 'GOSPEL'
-}
-
-#?reading_heading_spacing
-line_spacing = 5
-#?reading_heading_size
-heading_size = 11
-for reading_page, reading in zip(reading_pages, readings['readings']):
-	#?readings
-	text_size = 11
-	#?readings
-	bottom_spacing = 20
-
-	parseText(reading_page, '<b>'
-		+ ('OR' if reading['alt'] else reading_types[reading['type']])
-		+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
-		+ '<_tab><b>'
-		+ reading['ref']
-		+ '</b>',
-	heading_size, 1, pbottom=line_spacing, left_right=left_half_width)
-	
-	if reading['type'] in ['reading1', 'reading2', 'gospel']:
-		if reading['title']:
-			parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', heading_size, 1, pbottom=line_spacing)
-			parseText(reading_page, ' '.join(reading['text']), text_size, 1, pbottom=bottom_spacing)
-	elif reading['type'] in ['psalm', 'acclamation'] and not reading['alt']:
-		if not reading['sameline'] and not reading['alt']:
-			parseText(reading_page, '<i>wording may differ if sung</i>', heading_size, 1, pbottom=line_spacing)
-
-		if reading['type'] == 'psalm':
-			parseText(reading_page, '<b>' + reading['text'][0] + '</b>', text_size, 1, pbottom=line_spacing)
-			parseText(reading_page, '<br>\u2800<br>'.join(['<br>'.join(verse) for verse in reading['text'][1:]]), text_size, 1, pbottom=bottom_spacing)
-		else: # acclamation
-			parseText(reading_page, '<br>'.join(['<b>Alleluia, alleluia.</b>', *reading['text'], '<b>Alleluia.</b>']), text_size, 1, pbottom=bottom_spacing)
-
-#?copyright_size
-copyright_size = 9
-#?copyright_spacing
-copyright_spacing = 20
-
-parseText(reading_table.cell(0, 0 if readings['copyright'] == 0 else 2), 
-	'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
-	copyright_size, 1, pbottom=copyright_spacing)
-parseText(reading_table.cell(0, 0 if readings['dpa'] == 0 else 2), 
-	'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
-	copyright_size, 1)
-
-#####
-
-doc.save('out.docx')
-convert('out.docx', 'out.pdf')
-
-def main(
-	front_page_margins: tuple[int | float, int | float],
-	info_data: list[tuple[int, str]],
-	info_size: int | float,
-	title: str,
-	title_size: int | float,
-	church_title: str,
-	church_info: str,
-	church_info_size: int | float,
-	mass_info: list[str],
-	mass_info_size: int | float,
-	data: list[tuple[int | float, str]],
-	readings: dict,
-	reading_margins: tuple[int | float, int | float],
-	reading_heading_spacing: int | float,
-	reading_heading_size: int | float,
-	copyright_size: int | float,
-	copyright_spacing: int | float
-):
-	...

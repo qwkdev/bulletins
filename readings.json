@@ -6,7 +6,8 @@
     "date": "20250831",
     "readings": [
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "reading1",
             "alt": false,
             "ref": "Ecclesiasticus 3:19-21,30-31",
@@ -25,7 +26,8 @@
             ]
         },
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "psalm",
             "alt": false,
             "ref": "Psalm 67(68):4-7,10-11",
@@ -54,7 +56,8 @@
             ]
         },
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "reading2",
             "alt": false,
             "ref": "Hebrews 12:18-19,22-24a",
@@ -64,7 +67,8 @@
             ]
         },
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "acclamation",
             "alt": false,
             "ref": "Jn14:23",
@@ -77,7 +81,8 @@
             ]
         },
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "acclamation",
             "alt": true,
             "ref": "Mt11:29",
@@ -90,7 +95,8 @@
             ]
         },
         {
-            "size": 10,
+            "size": 11,
+            "margin": 20,
             "type": "gospel",
             "alt": false,
             "ref": "Luke 14:1,7-14",

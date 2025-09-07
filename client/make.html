@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Bulletins</title>
+
+	<link rel="stylesheet" href="style.css">
+</head>
+<body>
+	<div class="bg bgc1"></div>
+	<div class="bg bgc2"></div>
+	<div class="bg bgc3"></div>
+	<div class="bg bgc4"></div>
+	<div class="bg bgc5"></div>
+	<div class="bg2 bgc1"></div>
+	<div class="bg2 bgc2"></div>
+	<div class="bg2 bgc3"></div>
+	<div class="bg2 bgc4"></div>
+	<div class="bg2 bgc5"></div>
+
+	<div id="forms" style="--form: 0;">
+		<div class="wrapper"><div class="form" id="front">
+			<h1 class="header">Front Page</h1>
+			<div class="value">
+				<p>Top/Bottom Margins:</p>
+				<div class="value-wrap">
+					<input type="number" min="5" value="9">
+					<span>mm</span>
+				</div>
+			</div>
+			<div class="text">
+				<div class="inner-value">
+					<p>Bulletin Title</p>
+					<div class="value-wrap">
+						<span>Size:</span>
+						<input type="number" value="14">
+					</div>
+				</div>
+				<textarea rows="2"><b>SUNDAY</b></textarea>
+			</div>
+			<div class="text">
+				<div class="inner-value">
+					<p>Church Title</p>
+					<div class="value-wrap">
+						<span>Size:</span>
+						<input type="number" value="14">
+					</div>
+				</div>
+				<textarea rows="3"><b>Father John Lyons & Deacon Nick Pryce
+St Joseph's RC Church</b></textarea>
+			</div>
+			<div class="text">
+				<div class="inner-value">
+					<p>Church Info</p>
+					<div class="value-wrap">
+						<span>Size:</span>
+						<input type="number" value="10">
+					</div>
+				</div>
+				<textarea rows="4">3 Buchanan Street, Milngavie, G62 8DZ
+Phone: 0141 956 1400
+Email: stjoseph.milngavie@rcag.org.uk
+Website: www.stjosephschurchmilngavie.co.uk</textarea>
+			</div>
+			<p class="header collapse-toggle" onclick="collapse('mass-info-collapse')">Mass times/info<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="collapse" id="mass-info-collapse">
+				<div class="value">
+					<p>Text Size:</p>
+					<div class="value-wrap">
+						<input type="number" value="10">
+						<span>pt</span>
+					</div>
+				</div>
+				<div class="multi" id="mass-info">
+					<div class="multi-template text">
+						<div class="inner-value">
+							<p></p>
+							<div class="value-wrap">
+								<button onclick="multimove(-1, this)">&#x2191;</button>
+								<button onclick="multimove(1, this)">&#x2193;</button>
+								<button onclick="multiremove(this)">X</button>
+							</div>
+						</div>
+						<textarea rows="4"><b></b>
+</textarea>
+					</div>
+				</div>
+				<button class="multi-add" onclick="multiadd('mass-info')">+</button>
+			</div>
+		</div></div>
+		<div class="wrapper"><div class="form" id="info"></div></div>
+		<div class="wrapper"><div class="form" id="readings"></div></div>
+	</div>
+	<div id="buttons">
+		<button id="prev" onclick="step(-1)" hidden><</button>
+		<button id="save" onclick="save()">SAVE</button>
+		<button id="next" onclick="step(1)">></button>
+	</div>
+
+	<div id="embed"></div>
+
+	<script>
+		const forms = document.getElementById('forms');
+		const prevBtn = document.getElementById('prev');
+		const nextBtn = document.getElementById('next');
+		function step(direction) {
+			let cur = Number(forms.style.getPropertyValue("--form"));
+			cur += direction;
+
+			if (cur < 0) { cur = 2; }
+			else if (cur > 2) { cur = 0; }
+			forms.style.setProperty("--form", cur);
+
+			prevBtn.hidden = cur == 0;
+			nextBtn.hidden = cur == 2;
+		}
+
+		function collapse(collapseId) {
+			console.log(collapseId);
+			const col = document.getElementById(collapseId);
+			console.log(col);
+			console.log(col.hidden);
+			col.hidden = !col.hidden;
+			console.log(col.hidden);
+		}
+
+		function multiadd(multiId) {
+			const multi = document.getElementById(multiId);
+
+			const template = multi.querySelector('.multi-template');
+			const clone = template.cloneNode(true);
+			clone.classList.remove('multi-template');
+
+			multi.appendChild(clone);
+		}
+		function multiremove(btn) {
+			btn.parentElement.parentElement.parentElement.remove();
+		}
+		function multimove(dir, btn) {
+			const ele = btn.parentElement.parentElement.parentElement;
+
+			if (dir == -1) {
+				const prev = ele.previousElementSibling;
+				if (prev) ele.parentNode.insertBefore(ele, prev);
+			} else if (dir == 1) {
+				const next = ele.nextElementSibling;
+				if (next) ele.parentNode.insertBefore(next, ele);
+			}
+		}
+
+	</script>
+</body>
+</html>
