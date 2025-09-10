@@ -203,6 +203,8 @@ def totwips(val: int | float) -> int | float:
 	return val / 635
 def cellMargin(val: int | float) -> int | float:
 	return 300 * val
+def toCellMargin(val: int | float) -> int | float:
+	return val / 300
 
 def main(
 	front_page_margins: tuple[int | float, int | float],
@@ -216,7 +218,7 @@ def main(
 	church_info_size: int | float,
 	mass_info: list[str],
 	mass_info_size: int | float,
-	data: list[tuple[int | float, str]],
+	data: list[tuple[int | float, int | float, str]],
 	readings: dict,
 	reading_margins: tuple[int | float, int | float],
 	reading_heading_spacing: int | float,
@@ -330,15 +332,16 @@ def main(
 
 	set_table_borders(info_table, color='000000', size=4, outer=False)
 
-	data = [(i[0], i[1].replace('\n', '')) for i in data]
+	data = [(i[0], i[1], i[2].replace('\n', '')) for i in data]
 
 	data_table = a5table.cell(0, 0).add_table(rows=len(data), cols=1)
 	data_table.autofit = True
 	data_table.allow_autofit = True
 
-	for (size, txt), row in zip(data, data_table.rows):
+	for (size, vmargin, txt), row in zip(data, data_table.rows):
 		normalize_cell(row.cells[0], margins=False)
-		set_cell_margins(row.cells[0], 100, 80, 100, 80)
+		margin = toCellMargin(Mm(vmargin))
+		set_cell_margins(row.cells[0], margin, 80, margin, 80)
 		row.cells[0].width = left_half_width
 		parseText(row.cells[0], txt, size, 1)
 
@@ -380,8 +383,6 @@ def main(
 	normalize_cell(reading_table.cell(0, 0))
 	normalize_cell(reading_table.cell(0, 2))
 
-	reading_pages = [reading_table.cell(0, 0 if i < readings['left'] else 2) for i in range(len(readings['readings']))]
-
 	reading_types = {
 		'reading1': 'FIRST READING',
 		'psalm': 'RESPONSORIAL PSALM',
@@ -390,7 +391,8 @@ def main(
 		'gospel': 'GOSPEL'
 	}
 
-	for reading_page, reading in zip(reading_pages, readings['readings']):
+	for reading in readings['readings']:
+		reading_page = reading_table.cell(0, 0 if reading['left'] else 2)
 		parseText(reading_page, '<b>'
 			+ ('OR' if reading['alt'] else reading_types[reading['type']])
 			+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
@@ -474,7 +476,7 @@ and Thursday at 9.30 am
 	],
 	mass_info_size=10,
 	data=[
-(10, '''
+(10, 0.8, '''
 <b>MASS TIMES IN OUR PASTORAL AREA</b><br>
 Mass times are changing in our pastoral area from the <b>12<s>th</s> July</b> they will be:<br>
 <ul>
@@ -485,13 +487,13 @@ This change has become necessary due to Father John's illness and due to a lack 
 priests in the archdiocese. This change has been approved by the Archbishop and the Dean, 
 and will continue for the foreseeable future. We appreciate your understanding here.<br>
 Changes for weekday masses in both parishes will also be announced in due course.
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>SECOND COLLECTION</b> The next second collection will be the 28/29<s>th</s> June for Peter's Pence.
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>ST NICHOLAS' PRIMARY 1 WELCOME EVENT</b> - <i>Sunday 22<s>nd</s> June from 1 pm to 3 pm</i><br>
 In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and 
 meet the P6 buddies. Pre-loved uniforms are available. For children starting in August 2025.
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL MAURY BUENDÍA VISIT TO GLASGOW</b><br>
 <b>Sunday 22<s>nd</s> June:</b> Preside at the 12 noon Mass in Saint Andrew's Cathedral.<br>
 <b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross 
@@ -501,14 +503,14 @@ at 5.15 pm.<br>
 The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet 
 and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery 
 in Dumbarton, meet with Archdiocesan agencies (Evangelisation, Youth and SCIAF).
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>ABBA'S VINEYARD SACRED HEART PRAYER EVENING</b> - <i>Saturday 28<s>th</s> June from 5-9 pm</i><br>
 For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the 
 opportunity for confession, mass and dinner. All are welcome to join at any point. Address -<br>
 Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard. 
 For more information and a timetable search @abbasvineyard on social media or email: 
 abbasvineyard@gmail.com.
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>NICAEA 2025 - 1700<s>TH</s> ANNIVERSARY OF NICAEA</b> - <i>Sunday 22<s>nd</s> June at 3 pm</i><br>
 Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street. 
 Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of 
@@ -516,7 +518,7 @@ Nicaea, a cornerstone of Christian history. Experience a service filled with pra
 and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part 
 of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of 
 Nicaea and its impact on spiritual traditions.
-'''), (10, '''
+'''), (10, 0.8, '''
 <b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind 
 parishioners who came to her aid when she took unwell at Saturday night Mass and stayed 
 until the ambulance arrived. She is home now and feeling so much better.

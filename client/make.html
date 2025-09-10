@@ -19,7 +19,7 @@
 	<div class="bg2 bgc4"></div>
 	<div class="bg2 bgc5"></div>
 
-	<div id="forms" style="--form: 0;">
+	<div id="forms" style="--form: 2;">
 		<div class="wrapper"><div class="form" id="front">
 			<h1 class="header">Front Page</h1>
 			<div class="value">
@@ -73,7 +73,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					</div>
 				</div>
 				<div class="multi" id="mass-info">
-					<div class="multi-template text">
+					<div class="template text">
 						<div class="inner-value">
 							<p></p>
 							<div class="value-wrap">
@@ -88,14 +88,152 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				</div>
 				<button class="multi-add" onclick="multiadd('mass-info')">+</button>
 			</div>
+			<p class="header collapse-toggle" onclick="collapse('latest-info-collapse')">Latest Info<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="collapse" id="latest-info-collapse">
+				<div class="value">
+					<p>Text Size:</p>
+					<div class="value-wrap">
+						<input type="number" value="10">
+						<span>pt</span>
+					</div>
+				</div>
+				<div class="multi" id="latest-info">
+					<div class="template text">
+						<div class="inner-value">
+							<p></p>
+							<div class="value-wrap">
+								<span>Lines:</span>
+								<input type="number" value="1" min="1">
+								
+								<button onclick="multimove(-1, this)">&#x2191;</button>
+								<button onclick="multimove(1, this)">&#x2193;</button>
+								<button onclick="multiremove(this)">X</button>
+							</div>
+						</div>
+						<textarea rows="2"><b></b></textarea>
+					</div>
+					<div class="text">
+						<div class="inner-value">
+							<p></p>
+							<div class="value-wrap">
+								<span>Lines:</span>
+								<input type="number" value="1" min="1">
+								
+								<button onclick="multimove(-1, this)">&#x2191;</button>
+								<button onclick="multimove(1, this)">&#x2193;</button>
+								<button onclick="multiremove(this)">X</button>
+							</div>
+						</div>
+						<textarea rows="2"><i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i></textarea>
+					</div>
+				</div>
+				<button class="multi-add" onclick="multiadd('latest-info', true)">+</button>
+			</div>
 		</div></div>
-		<div class="wrapper"><div class="form" id="info"></div></div>
-		<div class="wrapper"><div class="form" id="readings"></div></div>
+		<div class="wrapper"><div class="form" id="info">
+			<h1 class="header">Notices</h1>
+			<div class="multi" id="notices">
+				<div class="template text">
+					<div class="inner-value">
+						<p></p>
+						<div class="value-wrap">
+							<span>Margins:</span>
+							<input type="number" value="0.8">
+							
+							<span>Text Size:</span>
+							<input type="number" value="10">
+							
+							<button onclick="multimove(-1, this)">&#x2191;</button>
+							<button onclick="multimove(1, this)">&#x2193;</button>
+							<button onclick="multiremove(this)">X</button>
+						</div>
+					</div>
+					<textarea rows="4"><b></b></textarea>
+				</div>
+			</div>
+			<button class="multi-add" onclick="multiadd('notices', true)">+</button>
+		</div></div>
+		<div class="wrapper"><div class="form" id="readings">
+			<h1 class="header">Readings</h1>
+			<p class="header collapse-toggle" onclick="collapse('readings-settings-collapse')">Settings<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="collapse" id="readings-settings-collapse">
+				<div class="value">
+					<p>Top/Bottom Margins:</p>
+					<div class="value-wrap">
+						<input type="number" min="5" value="12">
+						<span>mm</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Left/Right Margins:</p>
+					<div class="value-wrap">
+						<input type="number" min="5" value="9">
+						<span>mm</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Headings Spacing:</p>
+					<div class="value-wrap">
+						<input type="number" value="5">
+						<span>mm</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Headings Text Size:</p>
+					<div class="value-wrap">
+						<input type="number" value="11">
+						<span>pt</span>
+					</div>
+				</div>
+			</div>
+			<p class="header collapse-toggle" onclick="collapse('reading-collapse')">Reading<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="collapse" id="reading-collapse">
+				<div class="value">
+					<p>Show/Hide reading:</p>
+					<div class="value-wrap">
+						<span>Hidden</span>
+						<label>
+							<input type="checkbox" checked>
+							<span class="slider"></span>
+						</label>
+						<span>Included</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Select Page:</p>
+					<div class="value-wrap">
+						<span>Left</span>
+						<label>
+							<input type="checkbox">
+							<span class="slider"></span>
+						</label>
+						<span>Right</span>
+					</div>
+				</div>
+				<div class="text"> <!-- ! TODO TITLE AND REF AND SAMELINE AND ETC -->
+					<div class="inner-value">
+						<p></p>
+						<div class="value-wrap">
+							<span>Margin:</span>
+							<input type="number" value="20">
+							
+							<span>Text Size:</span>
+							<input type="number" value="10">
+							
+							<button onclick="multimove(-1, this)">&#x2191;</button>
+							<button onclick="multimove(1, this)">&#x2193;</button>
+							<button onclick="multiremove(this)">X</button>
+						</div>
+					</div>
+					<textarea rows="8"><b></b></textarea>
+				</div>
+			</div>
+		</div></div>
 	</div>
 	<div id="buttons">
-		<button id="prev" onclick="step(-1)" hidden><</button>
+		<button id="prev" onclick="step(-1)"><</button>
 		<button id="save" onclick="save()">SAVE</button>
-		<button id="next" onclick="step(1)">></button>
+		<button id="next" onclick="step(1)" hidden>></button>
 	</div>
 
 	<div id="embed"></div>
@@ -125,19 +263,21 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			console.log(col.hidden);
 		}
 
-		function multiadd(multiId) {
+		function multiadd(multiId, reverse=false) {
 			const multi = document.getElementById(multiId);
 
-			const template = multi.querySelector('.multi-template');
+			const template = multi.querySelector('.template');
 			const clone = template.cloneNode(true);
-			clone.classList.remove('multi-template');
+			clone.classList.remove('template');
 
-			multi.appendChild(clone);
+			if (reverse) multi.insertBefore(clone, multi.children[1]);
+			else multi.appendChild(clone);
 		}
 		function multiremove(btn) {
 			btn.parentElement.parentElement.parentElement.remove();
 		}
 		function multimove(dir, btn) {
+			console.log('multimove');
 			const ele = btn.parentElement.parentElement.parentElement;
 
 			if (dir == -1) {

@@ -10,7 +10,7 @@
 
 body {
 	margin: 0;
-	background: #75b7;
+	background: #75b5;
 	overflow: hidden;
 }
 #embed {
@@ -113,7 +113,7 @@ body {
 			justify-content: space-between;
 			align-items: center;
 
-			p, input, span {
+			p, input[type="text"], input[type="number"], span:not(.slider) {
 				margin: 0;
 
 				font-size: .7vw;
@@ -122,7 +122,7 @@ body {
 			p {
 				font-size: .8vw;
 			}
-			input {
+			input[type="text"], input[type="number"] {
 				width: 5vw;
 				height: 1.5vw;
 				padding-left: .4vw;
@@ -140,6 +140,64 @@ body {
 
 				&:hover {
 					background: var(--hover);
+				}
+			}
+
+			label {
+				--slider-margin: .25vw;
+				--slider-width: 3vw;
+				--slider-height: 1.5vw;
+				--slider-padding: .2vw;
+
+				position: relative;
+				width: var(--slider-width);
+				height: var(--slider-height);
+
+				margin: 0 var(--slider-margin);
+				
+				/* display: inline-block; */
+
+				input[type="checkbox"] {
+					opacity: 0;
+					width: 0;
+					height: 0;
+				}
+
+				.slider {
+					position: absolute;
+					top: 0;
+					bottom: 0;
+					left: 0;
+					right: 0;
+
+					border-radius: var(--slider-height);
+
+					background: #ccc;
+					transition: .3s;
+					
+					cursor: pointer;
+
+					&::before {
+						content: "";
+						position: absolute;
+						
+						width: calc(var(--slider-height) - (var(--slider-padding) * 2));
+						height: calc(var(--slider-height) - (var(--slider-padding) * 2));
+
+						top: var(--slider-padding);
+						left: var(--slider-padding);
+
+						border-radius: 50%;
+						
+						background: #fff;
+						transition: .3s;
+					}
+				}
+				input[type="checkbox"]:checked + .slider {
+					background: #07f;
+				}
+				input[type="checkbox"]:checked + .slider::before {
+					transform: translateX(calc(var(--slider-width) - var(--slider-height)));
 				}
 			}
 		}
@@ -203,9 +261,6 @@ body {
 			display: flex;
 		}
 
-		.multi-template {
-			display: none !important;
-		}
 		.multi-add {
 			background: none;
 			font-size: 2vw;
@@ -221,6 +276,10 @@ body {
 		}
 	}
 }
+.template {
+	display: none !important;
+}
+
 #buttons {
 	--outer-radius: 1vw;
 	--button-height: calc(100vh - var(--forms-height) - (var(--margin) * 2.5));
@@ -283,13 +342,13 @@ body {
 .bgc4 { animation: slide 3.5s ease-in-out infinite alternate; }
 .bgc5 { animation: slide 4.0s ease-in-out infinite alternate; }
 .bg {
-	opacity: .2;
+	opacity: .25;
 	background: linear-gradient(-60deg, #c9e 50%, #75b 50%);
 	&.bgc1 { animation-direction: alternate-reverse; }
 	&.bgc3 { animation-direction: alternate-reverse; }
 }
 .bg2 {
-	opacity: .1;
+	opacity: .15;
 	background: linear-gradient(60deg, #c9e 50%, #75b 50%);
 	&.bgc3 { animation-direction: alternate-reverse; }
 	&.bgc5 { animation-direction: alternate-reverse; }
