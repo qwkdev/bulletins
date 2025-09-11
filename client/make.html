@@ -156,7 +156,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		<div class="wrapper"><div class="form" id="readings">
 			<h1 class="header">Readings</h1>
 			<p class="header collapse-toggle" onclick="collapse('readings-settings-collapse')">Settings<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
-			<div class="collapse" id="readings-settings-collapse">
+			<div class="collapse" id="readings-settings-collapse" hidden>
 				<div class="value">
 					<p>Top/Bottom Margins:</p>
 					<div class="value-wrap">
@@ -186,8 +186,48 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					</div>
 				</div>
 			</div>
-			<p class="header collapse-toggle" onclick="collapse('reading-collapse')">Reading<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
-			<div class="collapse" id="reading-collapse">
+			<p class="header collapse-toggle" onclick="collapse('copyright-collapse')">Copyright<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="collapse" id="copyright-collapse" hidden>
+				<div class="value">
+					<p>Spacing:</p>
+					<div class="value-wrap">
+						<input type="number" value="20">
+						<span>mm</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Text Size:</p>
+					<div class="value-wrap">
+						<input type="number" value="9">
+						<span>pt</span>
+					</div>
+				</div>
+				
+				<div class="value">
+					<p>Copyright</p>
+					<div class="value-wrap">
+						<span>Left</span>
+						<label>
+							<input type="checkbox" checked>
+							<span class="slider"></span>
+						</label>
+						<span>Right</span>
+					</div>
+				</div>
+				<div class="value">
+					<p>Data Protection Act</p>
+					<div class="value-wrap">
+						<span>Left</span>
+						<label>
+							<input type="checkbox" checked>
+							<span class="slider"></span>
+						</label>
+						<span>Right</span>
+					</div>
+				</div>
+			</div>
+			<p class="template header collapse-toggle" id="reading-collapse-toggle"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
+			<div class="template collapse" id="reading-collapse" hidden>
 				<div class="value">
 					<p>Show/Hide reading:</p>
 					<div class="value-wrap">
@@ -210,19 +250,54 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<span>Right</span>
 					</div>
 				</div>
-				<div class="text"> <!-- ! TODO COPYRIGHT && TITLE AND REF AND SAMELINE AND ETC -->
+				<div class="text">
 					<div class="inner-value">
-						<p></p>
+						<p>Reference:</p>
+						<div class="value-wrap">
+							<span>Hidden</span>
+							<label>
+								<input type="checkbox" checked>
+								<span class="slider"></span>
+							</label>
+							<span>Included</span>
+						</div>
+					</div>
+					<textarea rows="1"><b></b></textarea>
+				</div>
+				<div class="text">
+					<div class="inner-value">
+						<p>Caption:</p>
+						<div class="value-wrap">
+							<span>Hidden</span>
+							<label>
+								<input type="checkbox" checked>
+								<span class="slider"></span>
+							</label>
+							<span>Included</span>
+						</div>
+					</div>
+					<textarea rows="1"><b></b></textarea>
+				</div>
+				<div class="value">
+					<p>"If Sung" warning:</p>
+					<div class="value-wrap">
+						<span>Next Line</span>
+						<label>
+							<input type="checkbox" checked>
+							<span class="slider"></span>
+						</label>
+						<span>Same Line</span>
+					</div>
+				</div>
+				<div class="text">
+					<div class="inner-value">
+						<p>Text:</p>
 						<div class="value-wrap">
 							<span>Margin:</span>
 							<input type="number" value="20">
 							
 							<span>Text Size:</span>
 							<input type="number" value="10">
-							
-							<button onclick="multimove(-1, this)">&#x2191;</button>
-							<button onclick="multimove(1, this)">&#x2193;</button>
-							<button onclick="multiremove(this)">X</button>
 						</div>
 					</div>
 					<textarea rows="8"><b></b></textarea>
@@ -289,6 +364,42 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			}
 		}
 
+		const readingTypes = {
+			reading1: 'First Reading',
+			psalm: 'Psalm',
+			reading2: 'Second Reading',
+			acclamation: 'Acclamation',
+			gospel: 'Gospel'
+		}
+
+		const readings = document.getElementById('readings');
+		const readingTemplateToggle = document.getElementById('reading-collapse-toggle');
+		const readingTemplate = document.getElementById('reading-collapse');
+		function loadReadings(data) {
+			data.forEach((r, i) => {
+				console.log(r['type'], r['alt'], r['ref'], r['title']);
+
+				const newReadingToggle = readingTemplateToggle.cloneNode(true);
+				newReadingToggle.classList.remove('template');
+				newReadingToggle.innerHTML = (readingTypes[r['type']] || 'Reading') + (r['alt'] ? ' (Alt)' : '') + newReadingToggle.innerHTML;
+				newReadingToggle.onclick = function() { collapse(`reading-collapse-${i+1}`); };
+				readings.appendChild(newReadingToggle);
+
+				const newReading = readingTemplate.cloneNode(true);
+				newReading.classList.remove('template');
+				newReading.id = `reading-collapse-${i+1}`;
+
+				readings.appendChild(newReading);
+			});
+		}
+
+		fetch('/readings2.json', { method: 'GET' })
+			.then(resp => resp.json())
+			.then(data => {
+				if (data['success']) loadReadings(data['readings']);
+				else console.error('Readings returned falsy success');
+			})
+			.catch(e => console.error('Error getting readings:', error));
 	</script>
 </body>
 </html>
