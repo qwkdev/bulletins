@@ -25,7 +25,7 @@
 			<div class="value">
 				<p>Top/Bottom Margins:</p>
 				<div class="value-wrap">
-					<input type="number" min="5" value="9">
+					<input type="number" min="5" value="9" data-name="margins">
 					<span>mm</span>
 				</div>
 			</div>
@@ -278,7 +278,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					</div>
 					<textarea rows="1"><b></b></textarea>
 				</div>
-				<div class="value">
+				<div class="template value">
 					<p>"If Sung" warning:</p>
 					<div class="value-wrap">
 						<span>Next Line</span>
@@ -288,6 +288,12 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						</label>
 						<span>Same Line</span>
 					</div>
+				</div>
+				<div class="template text">
+					<div class="inner-value">
+						<p>Response:</p>
+					</div>
+					<textarea rows="1"><b></b></textarea>
 				</div>
 				<div class="text">
 					<div class="inner-value">
@@ -377,7 +383,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		const readingTemplate = document.getElementById('reading-collapse');
 		function loadReadings(data) {
 			data.forEach((r, i) => {
-				console.log(r['type'], r['alt'], r['ref'], r['title']);
+				// console.log(r['type'], r['alt'], r['ref'], r['title']);
 
 				const newReadingToggle = readingTemplateToggle.cloneNode(true);
 				newReadingToggle.classList.remove('template');
@@ -389,8 +395,42 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				newReading.classList.remove('template');
 				newReading.id = `reading-collapse-${i+1}`;
 
+				if (r['type'] == 'psalm' || r['type'] == 'acclamation') {
+					newReading.querySelector('.template.value').classList.remove('template');
+
+					if (r['type'] == 'psalm') {
+						newReading.querySelector('.template.text').classList.remove('template');
+					}
+				}
+
 				readings.appendChild(newReading);
 			});
+		}
+
+		function getValue(parent, name, func=null) {
+			const ele = parent.querySelector(`input[data-name="${name}"], textarea[data-name="${name}"]`);
+			return func === null ? ele.value : func(ele.value);
+		}
+
+		function save() {
+			build();
+		}
+
+		function build() {
+			const output = {
+				'front': {
+
+				},
+				'back': {
+
+				},
+				'readings': {
+
+				}
+			};
+
+			const front = document.getElementById('front');
+			console.log(getValue(front, 'margins', Number));
 		}
 
 		fetch('/readings2.json', { method: 'GET' })
@@ -400,6 +440,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				else console.error('Readings returned falsy success');
 			})
 			.catch(e => console.error('Error getting readings:', error));
+
+		save();
 	</script>
 </body>
 </html>
