@@ -25,7 +25,14 @@
 			<div class="value">
 				<p>Top/Bottom Margins:</p>
 				<div class="value-wrap">
-					<input type="number" min="5" value="9" data-name="margins">
+					<input type="number" min="5" value="9" data-name="top-margin">
+					<span>mm</span>
+				</div>
+			</div>
+			<div class="value">
+				<p>Left/Right Margins:</p>
+				<div class="value-wrap">
+					<input type="number" min="5" value="9" data-name="left-margin">
 					<span>mm</span>
 				</div>
 			</div>
@@ -34,20 +41,20 @@
 					<p>Bulletin Title</p>
 					<div class="value-wrap">
 						<span>Size:</span>
-						<input type="number" value="14">
+						<input type="number" value="14" data-name="title-size">
 					</div>
 				</div>
-				<textarea rows="2"><b>SUNDAY</b></textarea>
+				<textarea rows="2" data-name="title"><b>SUNDAY</b></textarea>
 			</div>
 			<div class="text">
 				<div class="inner-value">
 					<p>Church Title</p>
 					<div class="value-wrap">
 						<span>Size:</span>
-						<input type="number" value="14">
+						<input type="number" value="14" data-name="church-title-size">
 					</div>
 				</div>
-				<textarea rows="3"><b>Father John Lyons & Deacon Nick Pryce
+				<textarea rows="3" data-name="church-title"><b>Father John Lyons & Deacon Nick Pryce
 St Joseph's RC Church</b></textarea>
 			</div>
 			<div class="text">
@@ -55,10 +62,10 @@ St Joseph's RC Church</b></textarea>
 					<p>Church Info</p>
 					<div class="value-wrap">
 						<span>Size:</span>
-						<input type="number" value="10">
+						<input type="number" value="10" data-name="church-info-size">
 					</div>
 				</div>
-				<textarea rows="4">3 Buchanan Street, Milngavie, G62 8DZ
+				<textarea rows="4" data-name="church-info">3 Buchanan Street, Milngavie, G62 8DZ
 Phone: 0141 956 1400
 Email: stjoseph.milngavie@rcag.org.uk
 Website: www.stjosephschurchmilngavie.co.uk</textarea>
@@ -68,7 +75,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				<div class="value">
 					<p>Text Size:</p>
 					<div class="value-wrap">
-						<input type="number" value="10">
+						<input type="number" value="10" data-name="mass-info-size">
 						<span>pt</span>
 					</div>
 				</div>
@@ -82,8 +89,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 								<button onclick="multiremove(this)">X</button>
 							</div>
 						</div>
-						<textarea rows="4"><b></b>
-</textarea>
+						<textarea rows="4" data-name="text"><b></b></textarea>
 					</div>
 				</div>
 				<button class="multi-add" onclick="multiadd('mass-info')">+</button>
@@ -93,7 +99,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				<div class="value">
 					<p>Text Size:</p>
 					<div class="value-wrap">
-						<input type="number" value="10">
+						<input type="number" value="10" data-name="latest-info-size">
 						<span>pt</span>
 					</div>
 				</div>
@@ -103,28 +109,28 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 							<p></p>
 							<div class="value-wrap">
 								<span>Lines:</span>
-								<input type="number" value="1" min="1">
+								<input type="number" value="1" min="1" data-name="lines">
 								
 								<button onclick="multimove(-1, this)">&#x2191;</button>
 								<button onclick="multimove(1, this)">&#x2193;</button>
 								<button onclick="multiremove(this)">X</button>
 							</div>
 						</div>
-						<textarea rows="2"><b></b></textarea>
+						<textarea rows="2" data-name="text"><b></b></textarea>
 					</div>
 					<div class="text">
 						<div class="inner-value">
 							<p></p>
 							<div class="value-wrap">
 								<span>Lines:</span>
-								<input type="number" value="1" min="1">
+								<input type="number" value="1" min="1" data-name="lines">
 								
 								<button onclick="multimove(-1, this)">&#x2191;</button>
 								<button onclick="multimove(1, this)">&#x2193;</button>
 								<button onclick="multiremove(this)">X</button>
 							</div>
 						</div>
-						<textarea rows="2"><i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i></textarea>
+						<textarea rows="2" data-name="text"><i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i></textarea>
 					</div>
 				</div>
 				<button class="multi-add" onclick="multiadd('latest-info', true)">+</button>
@@ -138,20 +144,20 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<p></p>
 						<div class="value-wrap">
 							<span>Margins:</span>
-							<input type="number" value="0.8">
+							<input type="number" value="0.8" data-name="margins">
 							
 							<span>Text Size:</span>
-							<input type="number" value="10">
+							<input type="number" value="10" data-name="size">
 							
 							<button onclick="multimove(-1, this)">&#x2191;</button>
 							<button onclick="multimove(1, this)">&#x2193;</button>
 							<button onclick="multiremove(this)">X</button>
 						</div>
 					</div>
-					<textarea rows="4"><b></b></textarea>
+					<textarea rows="4" data-name="text"><b></b></textarea>
 				</div>
 			</div>
-			<button class="multi-add" onclick="multiadd('notices', true)">+</button>
+			<button class="multi-add" onclick="multiadd('notices')">+</button>
 		</div></div>
 		<div class="wrapper"><div class="form" id="readings">
 			<h1 class="header">Readings</h1>
@@ -160,28 +166,28 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				<div class="value">
 					<p>Top/Bottom Margins:</p>
 					<div class="value-wrap">
-						<input type="number" min="5" value="12">
+						<input type="number" min="5" value="12" data-name="top-margin">
 						<span>mm</span>
 					</div>
 				</div>
 				<div class="value">
 					<p>Left/Right Margins:</p>
 					<div class="value-wrap">
-						<input type="number" min="5" value="9">
+						<input type="number" min="5" value="9" data-name="left-margin">
 						<span>mm</span>
 					</div>
 				</div>
 				<div class="value">
 					<p>Headings Spacing:</p>
 					<div class="value-wrap">
-						<input type="number" value="5">
+						<input type="number" value="5" data-name="heading-spacing">
 						<span>mm</span>
 					</div>
 				</div>
 				<div class="value">
 					<p>Headings Text Size:</p>
 					<div class="value-wrap">
-						<input type="number" value="11">
+						<input type="number" value="11" data-name="heading-size">
 						<span>pt</span>
 					</div>
 				</div>
@@ -191,14 +197,14 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				<div class="value">
 					<p>Spacing:</p>
 					<div class="value-wrap">
-						<input type="number" value="20">
+						<input type="number" value="20" data-name="copyright-spacing">
 						<span>mm</span>
 					</div>
 				</div>
 				<div class="value">
 					<p>Text Size:</p>
 					<div class="value-wrap">
-						<input type="number" value="9">
+						<input type="number" value="9" data-name="copyright-size">
 						<span>pt</span>
 					</div>
 				</div>
@@ -208,7 +214,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					<div class="value-wrap">
 						<span>Left</span>
 						<label>
-							<input type="checkbox" checked>
+							<input type="checkbox" checked data-name="copyright-page">
 							<span class="slider"></span>
 						</label>
 						<span>Right</span>
@@ -219,7 +225,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					<div class="value-wrap">
 						<span>Left</span>
 						<label>
-							<input type="checkbox" checked>
+							<input type="checkbox" checked data-name="dpa-page">
 							<span class="slider"></span>
 						</label>
 						<span>Right</span>
@@ -407,9 +413,22 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			});
 		}
 
+		function parseText(text) {
+			return text.replace(/\n/g, "<br>");
+		}
+
 		function getValue(parent, name, func=null) {
 			const ele = parent.querySelector(`input[data-name="${name}"], textarea[data-name="${name}"]`);
+			if (ele.type === 'checkbox') return func === null ? ele.checked : func(ele.checked)
 			return func === null ? ele.value : func(ele.value);
+		}
+		function getMulti(multiId, ...names) {
+			const multi = document.getElementById(multiId);
+			const items = multi.querySelectorAll(':scope > div:not(.template)');
+			if (!items) return [];
+
+			if (names.length === 1) return Array.from(items).map(ele => getValue(ele, names[0][0], names[0][1]));
+			return Array.from(items).map(ele => names.map(p => getValue(ele, p[0], p[1])));
 		}
 
 		function save() {
@@ -417,20 +436,58 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 
 		function build() {
-			const output = {
-				'front': {
-
+			const template = {
+				front: {
+					'top-margin': parseFloat,
+					'left-margin': parseFloat,
+					'title': parseText,
+					'title-size': parseFloat,
+					'church-title': parseText,
+					'church-title-size': parseFloat,
+					'church-info': parseText,
+					'church-info-size': parseFloat,
+					'mass-info-size': parseFloat,
+					'latest-info-size': parseFloat
 				},
-				'back': {
-
-				},
-				'readings': {
-
+				readings: {
+					'top-margin': parseFloat,
+					'left-margin': parseFloat,
+					'heading-spacing': parseFloat,
+					'heading-size': parseFloat,
+					'copyright-spacing': parseFloat,
+					'copyright-size': parseFloat,
+					'copyright-page': c => c ? 1 : 0,
+					'dpa-page': c => c ? 1 : 0
 				}
 			};
 
 			const front = document.getElementById('front');
-			console.log(getValue(front, 'margins', Number));
+			const readingSection = document.getElementById('readings');
+			const output = {
+				front: Object.fromEntries(
+					Object.entries(template.front).map(
+						([name, func]) => [name, getValue(front, name, func)]
+					)
+				),
+				back: getMulti('notices', ['size', parseFloat], ['margins', parseFloat], ['text', parseText]),
+				readings: {
+					options: Object.fromEntries(
+						Object.entries(template.readings).map(
+							([name, func]) => [name, getValue(readingSection, name, func)]
+						)
+					),
+					readings: {
+
+					}
+				}
+			}
+
+			//! TODO: Ensure reading section styling is from user
+
+			output.front['mass-info'] = getMulti('mass-info', ['text', parseText]);
+			output.front['latest-info'] = getMulti('latest-info', ['lines', parseInt], ['text', parseText]);
+
+			return output;
 		}
 
 		fetch('/readings2.json', { method: 'GET' })

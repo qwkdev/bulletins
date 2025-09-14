@@ -224,7 +224,9 @@ def main(
 	reading_heading_spacing: int | float,
 	reading_heading_size: int | float,
 	copyright_size: int | float,
-	copyright_spacing: int | float
+	copyright_spacing: int | float,
+	copyright_page: int,
+	dpa_page: int
 ):
 	doc = Document()
 
@@ -405,7 +407,7 @@ def main(
 			if reading['title']:
 				parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 				parseText(reading_page, ' '.join(reading['text']), reading['size'], 1, pbottom=reading['margin'])
-		elif reading['type'] in ['psalm', 'acclamation'] and not reading['alt']:
+		elif reading['type'] in ['psalm', 'acclamation']:
 			if not reading['sameline'] and not reading['alt']:
 				parseText(reading_page, '<i>wording may differ if sung</i>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 
@@ -415,10 +417,10 @@ def main(
 			else: # acclamation
 				parseText(reading_page, '<br>'.join(['<b>Alleluia, alleluia.</b>', *reading['text'], '<b>Alleluia.</b>']), reading['size'], 1, pbottom=reading['margin'])
 
-	parseText(reading_table.cell(0, 0 if readings['copyright'] == 0 else 2), 
+	parseText(reading_table.cell(0, 0 if copyright_page == 0 else 2), 
 		'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
 		copyright_size, 1, pbottom=copyright_spacing)
-	parseText(reading_table.cell(0, 0 if readings['dpa'] == 0 else 2), 
+	parseText(reading_table.cell(0, 0 if dpa_page == 0 else 2), 
 		'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
 		copyright_size, 1)
 
@@ -433,9 +435,9 @@ if not readings['success']:
 main(
 	front_page_margins=(9, 9),
 	info_data=[
-		(1, '''<b>RECENTLY DECEASED</b> Eileen Doherty, Jim O'Brien, Richard Fleming and Jane Jones.'''),
-		(1, '''<b>ANNIVERSARIES</b> Please pray for Frank Mosedale.'''),
-		(1, '''<b>PARISH SICK</b> Please pray for Father John and all the sick of our parish.'''),
+		(1, '''<b>RECENTLY DECEASED</b>.'''),
+		(1, '''<b>ANNIVERSARIES</b> Please pray for'''),
+		(1, '''<b>PARISH SICK</b> Please pray for Fath er John and all the sick of our parish.'''),
 		(1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
 	],
 	info_size=10,
@@ -529,5 +531,7 @@ until the ambulance arrived. She is home now and feeling so much better.
 	reading_heading_spacing=5,
 	reading_heading_size=11,
 	copyright_size=9,
-	copyright_spacing=20
+	copyright_spacing=20,
+	copyright_page=1,
+	dpa_page=1
 )
