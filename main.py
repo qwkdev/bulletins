@@ -1,5 +1,6 @@
 #! NOTE: Section margins must be at least 5mm
 
+import re
 import json
 import os; os.system('cls')
 
@@ -20,6 +21,9 @@ fancyq = {
 	"'": ('\u2018', '\u2019'),
 	'"': ('\u201C', '\u201D')
 }
+
+def format_linebreaks(text: str) -> str:
+	return re.sub(r'(?<=<br>)(?=<br>)', '\u2800', text)
 
 def set_table_borders(table, color='000000', size=4, outer=True):
 	tblBorders = OxmlElement('w:tblBorders')
@@ -123,7 +127,7 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False, lef
 		'/b', '/i', '/u', '/s', '/ul'
 	]
 
-	text = raw_text.replace('<br><ul>', '<ul>').replace('</ul><br>', '</ul>')
+	text = format_linebreaks(raw_text.replace('<br><ul>', '<ul>').replace('</ul><br>', '</ul>'))
 	p = obj.add_paragraph()
 	if center: p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 	if left_right is not None:
@@ -202,9 +206,9 @@ def topt(val: int | float) -> int | float:
 def totwips(val: int | float) -> int | float:
 	return val / 635
 def cellMargin(val: int | float) -> int | float:
-	return 300 * val
+	return 350 * val
 def toCellMargin(val: int | float) -> int | float:
-	return val / 300
+	return val / 350
 
 def main(
 	front_page_margins: tuple[int | float, int | float],
@@ -272,25 +276,26 @@ def main(
 
 	set_table_borders(a5table, color='000000', size=4)
 
-	info_data = [(i[0], i[1].replace('\n', '')) for i in info_data]
+	info_data = [(i[0], i[1], i[2].replace('\n', '')) for i in info_data]
 
 	info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
 	info_table.autofit = True
 	info_table.allow_autofit = True
 
 	total = 0
-	for n, ((lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
+	for n, ((align, lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
 		normalize_cell(row.cells[0], margins=False)
-		set_cell_margins(row.cells[0], 70, 80, 70, 80)
-		height = Pt(info_size * 1.25 * lines) + cellMargin(140)
+
+		cell_margin = 70
+		set_cell_margins(row.cells[0], cell_margin, 80, cell_margin, 80)
+		height = Pt(info_size * 1.22 * lines) + cellMargin(2 * cell_margin)
 		if n != len(info_data) - 1:
 			row.height = height
 			row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 		row.cells[0].width = right_half_width
-		parseText(row.cells[0], txt, info_size, 1, center=n == len(info_data) - 1)
+		parseText(row.cells[0], txt, info_size, 1, center=align == 1)
 
-		total += height
-	total += height
+		total += height + cellMargin(2 * cell_margin)
 
 	info_table.rows[0].height = a5table.rows[0].height - total
 	front_page = info_table.rows[0].cells[0]
@@ -393,29 +398,31 @@ def main(
 		'gospel': 'GOSPEL'
 	}
 
-	for reading in readings['readings']:
+	# no assumed styling
+	# reading text will be one string, or list if psalm
+	for reading in readings:
 		reading_page = reading_table.cell(0, 0 if reading['left'] else 2)
+		# only show or if already showing one (keep list of showed types)
 		parseText(reading_page, '<b>'
 			+ ('OR' if reading['alt'] else reading_types[reading['type']])
 			+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
-			+ '<_tab><b>'
-			+ reading['ref']
-			+ '</b>',
+			+ '<_tab>'
+			+ reading['ref'],
 		reading_heading_size, 1, pbottom=reading_heading_spacing, left_right=left_half_width)
 		
+		if reading['title']:
+			parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 		if reading['type'] in ['reading1', 'reading2', 'gospel']:
-			if reading['title']:
-				parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
-				parseText(reading_page, ' '.join(reading['text']), reading['size'], 1, pbottom=reading['margin'])
-		elif reading['type'] in ['psalm', 'acclamation']:
+			parseText(reading_page, reading['text'], reading['size'], 1, pbottom=reading['margin'])
+		if reading['type'] in ['psalm', 'acclamation']:
 			if not reading['sameline'] and not reading['alt']:
 				parseText(reading_page, '<i>wording may differ if sung</i>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 
 			if reading['type'] == 'psalm':
 				parseText(reading_page, '<b>' + reading['text'][0] + '</b>', reading['size'], 1, pbottom=reading_heading_spacing)
-				parseText(reading_page, '<br>\u2800<br>'.join(['<br>'.join(verse) for verse in reading['text'][1:]]), reading['size'], 1, pbottom=reading['margin'])
+				parseText(reading_page, reading['text'][1], reading['size'], 1, pbottom=reading['margin'])
 			else: # acclamation
-				parseText(reading_page, '<br>'.join(['<b>Alleluia, alleluia.</b>', *reading['text'], '<b>Alleluia.</b>']), reading['size'], 1, pbottom=reading['margin'])
+				parseText(reading_page, '<b>Alleluia, alleluia.</b><br>' + reading['text'] + '<br><b>Alleluia.</b>', reading['size'], 1, pbottom=reading['margin'])
 
 	parseText(reading_table.cell(0, 0 if copyright_page == 0 else 2), 
 		'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
@@ -424,114 +431,138 @@ def main(
 		'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
 		copyright_size, 1)
 
-	doc.save('out.docx')
-	convert('out.docx', 'out.pdf')
+	doc.save(f'out.docx')
+	convert(f'out.docx', f'out.pdf')
 
-with open('readings.json') as f:
-	readings = json.load(f)
-if not readings['success']:
-	raise ValueError('Reading data says: success=False')
+# main(
+# 	front_page_margins=(9, 9),
+# 	info_data=[
+# 		(0, 1, '''<b>RECENTLY DECEASED</b>.'''),
+# 		(0, 1, '''<b>ANNIVERSARIES</b> Please pray for'''),
+# 		(0, 1, '''<b>PARISH SICK</b> Please pray for Fath er John and all the sick of our parish.'''),
+# 		(1, 1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
+# 	],
+# 	info_size=10,
+# 	title='''
+# <b>THE MOST HOLY BODY AND BLOOD OF CHRIST<br>
+# CORPUS CHRISTI - SUNDAY 22<s>nd</s> JUNE 2025</b>
+# ''',
+# 	title_size=14,
+# 	church_title='''
+# <b>Father John Lyons & Deacon Nick Pryce<br>
+# Canon Bradburn (visiting)<br>
+# St Joseph's RC Church</b>
+# ''',
+# 	church_title_size=14,
+# 	church_info='''
+# 3 Buchanan Street, Milngavie, G62 8DZ<br>
+# Phone: 0141 956 1400<br>
+# Email: stjoseph.milngavie@rcag.org.uk<br>
+# Website: www.stjosephschurchmilngavie.co.uk
+# ''',
+# 	church_info_size=10,
+# 	mass_info=[
+# '''
+# <b>SUNDAY MASSES</b><br>
+# 5.30 pm Saturday Vigil Mass,<br>
+# 10 am and 11.30 am
+# ''', '''
+# <b>CHILDREN'S LITURGY</b><br>
+# Sunday 10 am mass<br>
+# (except 2nd Sunday of each month)
+# ''', '''
+# <b>WEEKDAY MASSES</b><br>
+# Monday, Wednesday<br>
+# and Friday at 9.30 am<br>
+# Eucharistic services Tuesday<br>
+# and Thursday at 9.30 am
+# '''
+# 	],
+# 	mass_info_size=10,
+# 	data=[
+# (10, 0.8, '''
+# <b>MASS TIMES IN OUR PASTORAL AREA</b><br>
+# Mass times are changing in our pastoral area from the <b>12<s>th</s> July</b> they will be:<br>
+# <ul>
+# St Joseph's <b>Church</b> - 4.30 pm Saturday Vigil (Confessions at 4 pm) and 11.30 am Sunday<br>
+# St <i>Andrew's</i> Church - 6 pm <s>Saturday</s> Vigil and 10 am Sunday<br>
+# </ul>
+# This change has become necessary due to Father John's illness and due to a lack of available 
+# priests in the archdiocese. This change has been approved by the Archbishop and the Dean, 
+# and will continue for the foreseeable future. We appreciate your understanding here.<br>
+# Changes for weekday masses in both parishes will also be announced in due course.
+# '''), (10, 0.8, '''
+# <b>SECOND COLLECTION</b> The next second collection will be the 28/29<s>th</s> June for Peter's Pence.
+# '''), (10, 0.8, '''
+# <b>ST NICHOLAS' PRIMARY 1 WELCOME EVENT</b> - <i>Sunday 22<s>nd</s> June from 1 pm to 3 pm</i><br>
+# In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and 
+# meet the P6 buddies. Pre-loved uniforms are available. For children starting in August 2025.
+# '''), (10, 0.8, '''
+# <b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL MAURY BUENDÍA VISIT TO GLASGOW</b><br>
+# <b>Sunday 22<s>nd</s> June:</b> Preside at the 12 noon Mass in Saint Andrew's Cathedral.<br>
+# <b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross 
+# Church, then Eucharistic Procession through Village at 4 pm, return to Church for Benediction 
+# at 5.15 pm.<br>
+# <b>Monday 23<s>rd</s> June:</b> Celebrate 1 pm Mass in Saint Andrew's Cathedral. 
+# The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet 
+# and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery 
+# in Dumbarton, meet with Archdiocesan agencies (Evangelisation, Youth and SCIAF).
+# '''), (10, 0.8, '''
+# <b>ABBA'S VINEYARD SACRED HEART PRAYER EVENING</b> - <i>Saturday 28<s>th</s> June from 5-9 pm</i><br>
+# For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the 
+# opportunity for confession, mass and dinner. All are welcome to join at any point. Address -<br>
+# Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard. 
+# For more information and a timetable search @abbasvineyard on social media or email: 
+# abbasvineyard@gmail.com.
+# '''), (10, 0.8, '''
+# <b>NICAEA 2025 - 1700<s>TH</s> ANNIVERSARY OF NICAEA</b> - <i>Sunday 22<s>nd</s> June at 3 pm</i><br>
+# Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street. 
+# Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of 
+# Nicaea, a cornerstone of Christian history. Experience a service filled with prayer, reflection 
+# and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part 
+# of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of 
+# Nicaea and its impact on spiritual traditions.
+# '''), (10, 0.8, '''
+# <b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind 
+# parishioners who came to her aid when she took unwell at Saturday night Mass and stayed 
+# until the ambulance arrived. She is home now and feeling so much better.
+# ''')
+# 	],
+# 	readings=readings,
+# 	reading_margins=(10, 9),
+# 	reading_heading_spacing=5,
+# 	reading_heading_size=11,
+# 	copyright_size=9,
+# 	copyright_spacing=20,
+# 	copyright_page=1,
+# 	dpa_page=1
+# )
+
+#####
+
+# data = {}
+with open('output.json', encoding='utf-8') as f:
+	data = json.load(f)
 
 main(
-	front_page_margins=(9, 9),
-	info_data=[
-		(1, '''<b>RECENTLY DECEASED</b>.'''),
-		(1, '''<b>ANNIVERSARIES</b> Please pray for'''),
-		(1, '''<b>PARISH SICK</b> Please pray for Fath er John and all the sick of our parish.'''),
-		(1, '''<i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i>''')
-	],
-	info_size=10,
-	title='''
-<b>THE MOST HOLY BODY AND BLOOD OF CHRIST<br>
-CORPUS CHRISTI - SUNDAY 22<s>nd</s> JUNE 2025</b>
-''',
-	title_size=14,
-	church_title='''
-<b>Father John Lyons & Deacon Nick Pryce<br>
-Canon Bradburn (visiting)<br>
-St Joseph's RC Church</b>
-''',
-	church_title_size=14,
-	church_info='''
-3 Buchanan Street, Milngavie, G62 8DZ<br>
-Phone: 0141 956 1400<br>
-Email: stjoseph.milngavie@rcag.org.uk<br>
-Website: www.stjosephschurchmilngavie.co.uk
-''',
-	church_info_size=10,
-	mass_info=[
-'''
-<b>SUNDAY MASSES</b><br>
-5.30 pm Saturday Vigil Mass,<br>
-10 am and 11.30 am
-''', '''
-<b>CHILDREN'S LITURGY</b><br>
-Sunday 10 am mass<br>
-(except 2nd Sunday of each month)
-''', '''
-<b>WEEKDAY MASSES</b><br>
-Monday, Wednesday<br>
-and Friday at 9.30 am<br>
-Eucharistic services Tuesday<br>
-and Thursday at 9.30 am
-'''
-	],
-	mass_info_size=10,
-	data=[
-(10, 0.8, '''
-<b>MASS TIMES IN OUR PASTORAL AREA</b><br>
-Mass times are changing in our pastoral area from the <b>12<s>th</s> July</b> they will be:<br>
-<ul>
-St Joseph's <b>Church</b> - 4.30 pm Saturday Vigil (Confessions at 4 pm) and 11.30 am Sunday<br>
-St <i>Andrew's</i> Church - 6 pm <s>Saturday</s> Vigil and 10 am Sunday<br>
-</ul>
-This change has become necessary due to Father John's illness and due to a lack of available 
-priests in the archdiocese. This change has been approved by the Archbishop and the Dean, 
-and will continue for the foreseeable future. We appreciate your understanding here.<br>
-Changes for weekday masses in both parishes will also be announced in due course.
-'''), (10, 0.8, '''
-<b>SECOND COLLECTION</b> The next second collection will be the 28/29<s>th</s> June for Peter's Pence.
-'''), (10, 0.8, '''
-<b>ST NICHOLAS' PRIMARY 1 WELCOME EVENT</b> - <i>Sunday 22<s>nd</s> June from 1 pm to 3 pm</i><br>
-In St Andrew's Church Hall. Open to all families to drop in for activities, refreshments and 
-meet the P6 buddies. Pre-loved uniforms are available. For children starting in August 2025.
-'''), (10, 0.8, '''
-<b>APOSTOLIC NUNCIO, H.E. ARCHBISHOP MIGUEL MAURY BUENDÍA VISIT TO GLASGOW</b><br>
-<b>Sunday 22<s>nd</s> June:</b> Preside at the 12 noon Mass in Saint Andrew's Cathedral.<br>
-<b>Sunday 22<s>nd</s> June:</b> Blessed Sacrament Procession in Croy, beginning 3.45 pm at Holy Cross 
-Church, then Eucharistic Procession through Village at 4 pm, return to Church for Benediction 
-at 5.15 pm.<br>
-<b>Monday 23<s>rd</s> June:</b> Celebrate 1 pm Mass in Saint Andrew's Cathedral. 
-The Nuncio's will also visit Barlinnie Prison, Glasgow University and Glasgow Cathedral (meet 
-and pray with other church leaders). He will also celebrate Mass in the Carmelite Monastery 
-in Dumbarton, meet with Archdiocesan agencies (Evangelisation, Youth and SCIAF).
-'''), (10, 0.8, '''
-<b>ABBA'S VINEYARD SACRED HEART PRAYER EVENING</b> - <i>Saturday 28<s>th</s> June from 5-9 pm</i><br>
-For young adults aged 18-35. Gather in an evening for the Sacred Heart. Includes the 
-opportunity for confession, mass and dinner. All are welcome to join at any point. Address -<br>
-Bl John Duns Scotus, 270 Ballater Street, Glasgow, G5 0YT. Organised by Abba's Vineyard. 
-For more information and a timetable search @abbasvineyard on social media or email: 
-abbasvineyard@gmail.com.
-'''), (10, 0.8, '''
-<b>NICAEA 2025 - 1700<s>TH</s> ANNIVERSARY OF NICAEA</b> - <i>Sunday 22<s>nd</s> June at 3 pm</i><br>
-Glasgow Churches Together invites you to Nicaea in St Andrew's Cathedral, Clyde Street. 
-Commemorating the legacy of faith and unity. Celebrate 1700 years since the First Council of 
-Nicaea, a cornerstone of Christian history. Experience a service filled with prayer, reflection 
-and sacred music. Witness the unity and enduring significance of the Nicene Creed. Be part 
-of a celebration of Nicaea's enduring legacy. Deepen your understanding of the Council of 
-Nicaea and its impact on spiritual traditions.
-'''), (10, 0.8, '''
-<b>THANK YOU</b> Frances Gillian Millerick would like to say a very big thank you to those very kind 
-parishioners who came to her aid when she took unwell at Saturday night Mass and stayed 
-until the ambulance arrived. She is home now and feeling so much better.
-''')
-	],
-	readings=readings,
-	reading_margins=(10, 9),
-	reading_heading_spacing=5,
-	reading_heading_size=11,
-	copyright_size=9,
-	copyright_spacing=20,
-	copyright_page=1,
-	dpa_page=1
+	front_page_margins=(data['front']['top-margin'], data['front']['left-margin']),
+	info_data=data['front']['latest-info'],
+	info_size=data['front']['latest-info-size'],
+	title=data['front']['title'],
+	title_size=data['front']['title-size'],
+	church_title=data['front']['church-title'],
+	church_title_size=data['front']['church-title-size'],
+	church_info=data['front']['church-info'],
+	church_info_size=data['front']['church-info-size'],
+	mass_info=data['front']['mass-info'],
+	mass_info_size=data['front']['mass-info-size'],
+	data=data['back'],
+	readings=data['readings']['readings'],
+	reading_margins=(data['readings']['options']['top-margin'], data['readings']['options']['left-margin']),
+	reading_heading_spacing=data['readings']['options']['heading-spacing'],
+	reading_heading_size=data['readings']['options']['heading-size'],
+	copyright_size=data['readings']['options']['copyright-size'],
+	copyright_spacing=data['readings']['options']['copyright-spacing'],
+	copyright_page=data['readings']['options']['copyright-page'],
+	dpa_page=data['readings']['options']['dpa-page'],
 )

@@ -1,0 +1,116 @@
+{
+	"front": {
+		"top-margin": 9,
+		"left-margin": 9,
+		"title": "<b>SUNDAY</b>",
+		"title-size": 14,
+		"church-title": "<b>Father John Lyons & Deacon Nick Pryce<br>St Joseph's RC Church</b>",
+		"church-title-size": 14,
+		"church-info": "3 Buchanan Street, Milngavie, G62 8DZ<br>Phone: 0141 956 1400<br>Email: stjoseph.milngavie@rcag.org.uk<br>Website: www.stjosephschurchmilngavie.co.uk",
+		"church-info-size": 10,
+		"mass-info-size": 10,
+		"latest-info-size": 10,
+		"mass-info": [
+			"<b>souijdnfoieuwnfeqwoifn</b>"
+		],
+		"latest-info": [
+			[
+				0,
+				1,
+				"<b>woikjeunfwiejbnfewkjn</b>"
+			],
+			[
+				1,
+				1,
+				"<b>woikjeunfwiejbnfewkjn</b>"
+			]
+		]
+	},
+	"back": [
+		[
+			10,
+			0.8,
+			"<b>notice iusnefijusnbef</b>"
+		]
+	],
+	"readings": {
+		"options": {
+			"top-margin": 12,
+			"left-margin": 9,
+			"heading-spacing": 5,
+			"heading-size": 11,
+			"copyright-spacing": 20,
+			"copyright-size": 9,
+			"copyright-page": 1,
+			"dpa-page": 1
+		},
+		"readings": [
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "reading1",
+				"alt": false,
+				"ref": "Wisdom 9:13-18",
+				"title": "Who can divine the will of God?",
+				"text": "What man indeed can know the intentions of God?<br>Who can divine the will of the Lord?<br>The reasonings of mortals are unsure<br>and our intentions unstable;<br>for a perishable body presses down the soul,<br>and this tent of clay weighs down the teeming mind.<br>It is hard enough for us to work out what is on earth,<br>laborious to know what lies within our reach;<br>who, then, can discover what is in the heavens?<br>As for your intention, who could have learnt it, had you not granted Wisdom<br>and sent your holy spirit from above?<br>Thus have the paths of those on earth been straightened<br>and men been taught what pleases you,<br>and saved, by Wisdom."
+			},
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "psalm",
+				"alt": false,
+				"ref": "Psalm 89(90):3-6,12-14,17",
+				"title": "",
+				"sameline": true,
+				"text": [
+					"O Lord, you have been our refuge from one generation to the next.",
+					"You turn men back to dust<br>and say: ‘Go back, sons of men.’<br>To your eyes a thousand years<br>are like yesterday, come and gone,<br>no more than a watch in the night.<br><br>You sweep men away like a dream,<br>like the grass which springs up in the morning.<br>In the morning it springs up and flowers:<br>by evening it withers and fades.<br><br>Make us know the shortness of our life<br>that we may gain wisdom of heart.<br>Lord, relent! Is your anger for ever?<br>Show pity to your servants.<br><br>In the morning, fill us with your love;<br>we shall exult and rejoice all our days.<br>Let the favour of the Lord be upon us:<br>give success to the work of our hands."
+				]
+			},
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "reading2",
+				"alt": false,
+				"ref": "Philemon 9-10,12-17",
+				"title": "He is a slave no longer, but a dear brother in the Lord",
+				"text": "This is Paul writing, an old man now and, what is more, still a prisoner of Christ Jesus. I am appealing to you for a child of mine, whose father I became while wearing these chains: I mean Onesimus. I am sending him back to you, and with him – I could say – a part of my own self. I should have liked to keep him with me; he could have been a substitute for you, to help me while I am in the chains that the Good News has brought me. However, I did not want to do anything without your consent; it would have been forcing your act of kindness, which should be spontaneous. I know you have been deprived of Onesimus for a time, but it was only so that you could have him back for ever, not as a slave any more, but something much better than a slave, a dear brother; especially dear to me, but how much more to you, as a blood-brother as well as a brother in the Lord. So if all that we have in common means anything to you, welcome him as you would me."
+			},
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "acclamation",
+				"alt": false,
+				"ref": "Jn15:15",
+				"title": "",
+				"sameline": true,
+				"text": "I call you friends, says the Lord,<br>because I have made known to you<br>everything I have learnt from my Father."
+			},
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "acclamation",
+				"alt": true,
+				"ref": "Ps118:135",
+				"title": "",
+				"sameline": true,
+				"text": "Let your face shine on your servant;<br>and teach me your decrees."
+			},
+			{
+				"left": true,
+				"size": 10,
+				"margin": 20,
+				"type": "gospel",
+				"alt": false,
+				"ref": "Luke 14:25-33",
+				"title": "Anyone who does not carry his cross and follow me cannot be my disciple",
+				"text": "Great crowds accompanied Jesus on his way and he turned and spoke to them. ‘If any man comes to me without hating his father, mother, wife, children, brothers, sisters, yes and his own life too, he cannot be my disciple. Anyone who does not carry his cross and come after me cannot be my disciple.<br>‘And indeed, which of you here, intending to build a tower, would not first sit down and work out the cost to see if he had enough to complete it? Otherwise, if he laid the foundation and then found himself unable to finish the work, the onlookers would all start making fun of him and saying, “Here is a man who started to build and was unable to finish.” Or again, what king marching to war against another king would not first sit down and consider whether with ten thousand men he could stand up to the other who advanced against him with twenty thousand? If not, then while the other king was still a long way off, he would send envoys to sue for peace. So in the same way, none of you can be my disciple unless he gives up all his possessions.’"
+			}
+		]
+	}
+}

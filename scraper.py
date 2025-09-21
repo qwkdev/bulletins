@@ -16,7 +16,7 @@ def split_list(l: list, sep) -> list[list]:
 
 	return result
 
-DATE = '20250907'
+DATE = '20250921'
 
 rqg = rq.get(f'https://universalis.com/{DATE}/mass.htm')
 soup = BeautifulSoup(rqg.text, 'html.parser')
@@ -61,7 +61,10 @@ sections.append(tmp)
 
 for section in sections:
 	if section.get('type') == 'psalm':
-		section['text'] = [section['lines'][0], *[i for i in split_list(section['lines'], section['lines'][0]) if i]]
+		section['text'] = [
+			section['lines'][0],
+			*[i for i in split_list(section['lines'], section['lines'][0]) if i]
+		]
 	elif section.get('type') == 'acclamation':
 		section['text'] = section['lines'][1:-1]
 	else:

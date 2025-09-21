@@ -106,7 +106,14 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				<div class="multi" id="latest-info">
 					<div class="template text">
 						<div class="inner-value">
-							<p></p>
+							<div class="value-wrap">
+								<span>Align Left</span>
+								<label>
+									<input type="checkbox" data-name="centered">
+									<span class="slider"></span>
+								</label>
+								<span>Centered</span>
+							</div>
 							<div class="value-wrap">
 								<span>Lines:</span>
 								<input type="number" value="1" min="1" data-name="lines">
@@ -120,7 +127,14 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					</div>
 					<div class="text">
 						<div class="inner-value">
-							<p></p>
+							<div class="value-wrap">
+								<span>Align Left</span>
+								<label>
+									<input type="checkbox" checked data-name="centered">
+									<span class="slider"></span>
+								</label>
+								<span>Centered</span>
+							</div>
 							<div class="value-wrap">
 								<span>Lines:</span>
 								<input type="number" value="1" min="1" data-name="lines">
@@ -234,12 +248,12 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			</div>
 			<p class="template header collapse-toggle" id="reading-collapse-toggle"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_iconCarrier"><path d="M6 9L12 15L18 9" stroke="#000000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg></p>
 			<div class="template collapse" id="reading-collapse" hidden>
-				<div class="value">
+				<div class="value" data-name="show-hide">
 					<p>Show/Hide reading:</p>
 					<div class="value-wrap">
 						<span>Hidden</span>
 						<label>
-							<input type="checkbox" checked>
+							<input type="checkbox" checked data-name="include">
 							<span class="slider"></span>
 						</label>
 						<span>Included</span>
@@ -250,7 +264,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					<div class="value-wrap">
 						<span>Left</span>
 						<label>
-							<input type="checkbox">
+							<input type="checkbox" data-name="left">
 							<span class="slider"></span>
 						</label>
 						<span>Right</span>
@@ -262,13 +276,13 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<div class="value-wrap">
 							<span>Hidden</span>
 							<label>
-								<input type="checkbox" checked>
+								<input type="checkbox" checked data-name="include-ref">
 								<span class="slider"></span>
 							</label>
 							<span>Included</span>
 						</div>
 					</div>
-					<textarea rows="1"><b></b></textarea>
+					<textarea rows="1" data-name="ref"></textarea>
 				</div>
 				<div class="text">
 					<div class="inner-value">
@@ -276,43 +290,43 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<div class="value-wrap">
 							<span>Hidden</span>
 							<label>
-								<input type="checkbox" checked>
+								<input type="checkbox" checked data-name="include-title">
 								<span class="slider"></span>
 							</label>
 							<span>Included</span>
 						</div>
 					</div>
-					<textarea rows="1"><b></b></textarea>
+					<textarea rows="1" data-name="title"></textarea>
 				</div>
 				<div class="template value">
 					<p>"If Sung" warning:</p>
 					<div class="value-wrap">
 						<span>Next Line</span>
 						<label>
-							<input type="checkbox" checked>
+							<input type="checkbox" checked data-name="sameline">
 							<span class="slider"></span>
 						</label>
 						<span>Same Line</span>
 					</div>
 				</div>
-				<div class="template text">
+				<div class="text" data-name="edit-response">
 					<div class="inner-value">
 						<p>Response:</p>
 					</div>
-					<textarea rows="1"><b></b></textarea>
+					<textarea rows="1" data-name="response"></textarea>
 				</div>
 				<div class="text">
 					<div class="inner-value">
 						<p>Text:</p>
 						<div class="value-wrap">
 							<span>Margin:</span>
-							<input type="number" value="20">
+							<input type="number" value="20" data-name="margin">
 							
 							<span>Text Size:</span>
-							<input type="number" value="10">
+							<input type="number" value="10" data-name="size">
 						</div>
 					</div>
-					<textarea rows="8"><b></b></textarea>
+					<textarea rows="8" data-name="text"></textarea>
 				</div>
 			</div>
 		</div></div>
@@ -342,12 +356,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 
 		function collapse(collapseId) {
-			console.log(collapseId);
 			const col = document.getElementById(collapseId);
-			console.log(col);
-			console.log(col.hidden);
 			col.hidden = !col.hidden;
-			console.log(col.hidden);
 		}
 
 		function multiadd(multiId, reverse=false) {
@@ -364,7 +374,6 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			btn.parentElement.parentElement.parentElement.remove();
 		}
 		function multimove(dir, btn) {
-			console.log('multimove');
 			const ele = btn.parentElement.parentElement.parentElement;
 
 			if (dir == -1) {
@@ -388,12 +397,16 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		const readingTemplateToggle = document.getElementById('reading-collapse-toggle');
 		const readingTemplate = document.getElementById('reading-collapse');
 		function loadReadings(data) {
+			const altAvailable = data
+				.filter(r => r.alt)
+				.map(r => r.type);
+
 			data.forEach((r, i) => {
-				// console.log(r['type'], r['alt'], r['ref'], r['title']);
+				// r['type'], r['alt'], r['ref'], r['title'];
 
 				const newReadingToggle = readingTemplateToggle.cloneNode(true);
 				newReadingToggle.classList.remove('template');
-				newReadingToggle.innerHTML = (readingTypes[r['type']] || 'Reading') + (r['alt'] ? ' (Alt)' : '') + newReadingToggle.innerHTML;
+				newReadingToggle.innerHTML = (readingTypes[r.type] || 'Reading') + (r.alt ? ' (Alt)' : '') + newReadingToggle.innerHTML;
 				newReadingToggle.onclick = function() { collapse(`reading-collapse-${i+1}`); };
 				readings.appendChild(newReadingToggle);
 
@@ -401,12 +414,31 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				newReading.classList.remove('template');
 				newReading.id = `reading-collapse-${i+1}`;
 
-				if (r['type'] == 'psalm' || r['type'] == 'acclamation') {
-					newReading.querySelector('.template.value').classList.remove('template');
+				newReading.dataset.name = 'reading-collapse';
+				newReading.dataset.type = r.type;
+				newReading.dataset.alt = r.alt ? 1 : 0;
 
-					if (r['type'] == 'psalm') {
-						newReading.querySelector('.template.text').classList.remove('template');
-					}
+				newReading.querySelector('textarea[data-name="ref"]').value = r.ref || '';
+				newReading.querySelector('textarea[data-name="title"]').value = r.title || '';
+
+				const editText = newReading.querySelector('textarea[data-name="text"]');
+				if (r.type !== 'psalm') {
+					newReading.querySelector('.text[data-name="edit-response"]').remove();
+					editText.value = r.text.join('\n');
+				} else {
+					editText.value = r.text
+						.slice(1)
+						.map(p => p.join('\n'))
+						.join('\n\n');
+
+					newReading.querySelector('textarea[data-name="response"]').value = r.text[0] || '';
+				}
+
+				if (r.type === 'psalm' || r.type === 'acclamation') {
+					newReading.querySelector('.template.value').classList.remove('template');
+				}
+				if (!altAvailable.includes(r.type)) {
+					newReading.querySelector('.value[data-name="show-hide"]').remove();
 				}
 
 				readings.appendChild(newReading);
@@ -414,12 +446,13 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 
 		function parseText(text) {
-			return text.replace(/\n/g, "<br>");
+			return text ? text.replace(/\n/g, "<br>") : '';
 		}
 
 		function getValue(parent, name, func=null) {
 			const ele = parent.querySelector(`input[data-name="${name}"], textarea[data-name="${name}"]`);
-			if (ele.type === 'checkbox') return func === null ? ele.checked : func(ele.checked)
+			if (!ele) return func === null ? null : func(null);
+			if (ele.type === 'checkbox') return func === null ? ele.checked : func(ele.checked);
 			return func === null ? ele.value : func(ele.value);
 		}
 		function getMulti(multiId, ...names) {
@@ -476,16 +509,38 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 							([name, func]) => [name, getValue(readingSection, name, func)]
 						)
 					),
-					readings: {
-
-					}
+					readings: []
 				}
 			}
 
-			//! TODO: Ensure reading section styling is from user
-
 			output.front['mass-info'] = getMulti('mass-info', ['text', parseText]);
-			output.front['latest-info'] = getMulti('latest-info', ['lines', parseInt], ['text', parseText]);
+			output.front['latest-info'] = getMulti('latest-info', ['centered', c => c ? 1 : 0], ['lines', parseInt], ['text', parseText]);
+
+			const readingCollapses = readingSection.querySelectorAll('.collapse[data-name="reading-collapse"]');
+			readingCollapses.forEach(ele => {
+				if (getValue(ele, 'include') === false) return;
+				const newReading = {
+					left: !getValue(ele, 'left'),
+					size: getValue(ele, 'size', parseFloat),
+					margin: getValue(ele, 'margin', parseFloat),
+					type: ele.dataset.type,
+					alt: ele.dataset.alt == "1",
+					ref: getValue(ele, 'include-ref') === false ? '' : getValue(ele, 'ref', parseText),
+					title: getValue(ele, 'include-title') === false ? '' : getValue(ele, 'title', parseText),
+					...(['psalm', 'acclamation'].includes(ele.dataset.type) && { sameline: getValue(ele, 'sameline') })
+				};
+
+				if (ele.dataset.type === 'psalm') {
+					newReading.text = [
+						getValue(ele, 'response', parseText),
+						getValue(ele, 'text', parseText)
+					]
+				} else {
+					newReading.text = getValue(ele, 'text', parseText);
+				}
+
+				output.readings.readings.push(newReading);
+			});
 
 			return output;
 		}
@@ -496,7 +551,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				if (data['success']) loadReadings(data['readings']);
 				else console.error('Readings returned falsy success');
 			})
-			.catch(e => console.error('Error getting readings:', error));
+			.catch(e => console.error('Error getting readings:', e));
 
 		save();
 	</script>
