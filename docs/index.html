@@ -337,9 +337,50 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		<button id="next" onclick="step(1)">></button>
 	</div>
 
+	<div id="top">
+		<h1>bulletins.mom</h1>
+		<button onclick="modal('load-readings-modal')">Load Readings</button>
+		<button onclick="modal('test-modal')">EXAMPLE</button>
+		<button onclick="modal('save-template-modal')">Save Template</button>
+		<button onclick="modal('load-template-modal')">Load Template</button>
+	</div>
+
 	<div id="embed"></div>
 
+	<dialog id="load-readings-modal">
+		<div class="modal">
+			<h1 class="header">Load Readings</h1>
+			<div class="value">
+				<p>Enter date:</p>
+				<div class="date-input">
+					<span>D</span>
+					<input type="number" min="1" max="31" data-name="day">
+					<span>M</span>
+					<input type="number" min="1" max="12" data-name="month">
+					<span>Y</span>
+					<input type="number" data-name="year">
+				</div>
+			</div>
+			<div class="choice">
+				<button onclick="">Load Blank Slate</button>
+				<button class="action" onclick="wait(getReadings)">Get Readings</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="wait" hidden>
+		<h1>LOADING...</h1>
+	</div>
+
 	<script>
+		const waitModal = document.getElementById('wait');
+		async function wait(func, text='LOADING...') {
+			waitModal.querySelector('h1').innerHTML = text;
+			waitModal.hidden = false;
+			await func();
+			waitModal.hidden = true;
+		}
+
 		const forms = document.getElementById('forms');
 		const prevBtn = document.getElementById('prev');
 		const nextBtn = document.getElementById('next');
@@ -445,6 +486,31 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			});
 		}
 
+		function parseDate(value) {
+			return value.padStart(2, '0').slice(0, 2);
+		}
+		function parseYear(value) {
+			return ('20'+value).slice(-4);
+		}
+		async function getReadings() {
+			const modal = document.getElementById('load-readings-modal');
+
+			const day = getValue(modal, 'day', parseDate);
+			const month = getValue(modal, 'month', parseDate);
+			const year = getValue(modal, 'year', parseYear);
+			console.log(`${year}${month}${day}`);
+
+			await fetch('/readings2.json', { method: 'GET' })
+				.then(resp => resp.json())
+				.then(data => {
+					if (data['success']) loadReadings(data['readings']);
+					else console.error('Readings returned falsy success');
+				})
+				.catch(e => console.error('Error getting readings:', e));
+
+			modal.close();
+		}
+
 		function parseText(text) {
 			return text ? text.replace(/\n/g, "<br>") : '';
 		}
@@ -545,15 +611,19 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			return output;
 		}
 
-		fetch('/readings2.json', { method: 'GET' })
-			.then(resp => resp.json())
-			.then(data => {
-				if (data['success']) loadReadings(data['readings']);
-				else console.error('Readings returned falsy success');
-			})
-			.catch(e => console.error('Error getting readings:', e));
+		const modals = document.querySelectorAll('dialog');
+		Array.from(modals).forEach(modal => {
+			modal.addEventListener('click', e => {
+				if (e.target === modal) {
+					modal.close();
+				}
+			});
+		});
+		function modal(modalId) {
+			document.getElementById(modalId).showModal();
+		}
 
-		save();
+		// modal('load-readings-modal');
 	</script>
 </body>
 </html>
