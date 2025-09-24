@@ -66,6 +66,8 @@ body {
 	background: #fff;
 
 	border-top-left-radius: 1vw;
+
+	border: none;
 }
 #forms {
 	--form: 0;
@@ -93,6 +95,14 @@ body {
 
 		background: #fff;
 	}
+}
+#readings-wrapper {
+	width: 100%;
+	height: min-content;
+	
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin);
 }
 .form, .modal {
 	width: 100%;

@@ -1,13 +1,8 @@
-#! NOTE: Section margins must be at least 5mm
-
 import re
-import json
-import os; os.system('cls')
 
 import math
-from docx2pdf import convert
 from docx import Document
-from docx.shared import Mm, Pt, Twips
+from docx.shared import Mm, Pt
 from docx.enum.section import WD_ORIENTATION, WD_SECTION
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ROW_HEIGHT_RULE, WD_CELL_VERTICAL_ALIGNMENT
@@ -15,6 +10,7 @@ from docx.enum.table import WD_ROW_HEIGHT_RULE, WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
+GLOBAL_PATH: str = ''  # '/home/bulletins/mysite/'
 GLOBAL_FONT: str = 'Calibri'
 
 fancyq = {
@@ -106,6 +102,11 @@ def remove_blank_p(cell):
 			if len(cell.paragraphs) > 1:
 				p._element.getparent().remove(p._element)
 
+def safe_normalize_page(left: bool, check: list[bool, bool], table) -> None:
+	if not check[0 if left else 1]:
+		normalize_cell(table.cell(0, 0 if left else 2))
+		check[0 if left else 1] = True
+
 def add_run(p, txt, size, ctx):
 	run = p.add_run(txt)
 	run.font.size = Pt(size)
@@ -147,7 +148,7 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False, lef
 			if txt:
 				add_run(p, txt, size, ctx)
 				txt = ''
-			
+
 			if intag not in valid_tags:
 				add_run(p, '<'+intag+'>', size, ctx)
 			elif 'ul' in intag or (ctx and ctx[-1] == 'ul'):
@@ -188,10 +189,10 @@ def parseText(obj, raw_text, size, spacing, ptop=0, pbottom=0, center=False, lef
 				intag += c
 			else:
 				txt += c
-	
+
 	add_run(p, txt, size, ctx)
 	if intag: add_run(p, '<'+intag, size, ctx)
-	
+
 	p.paragraph_format.space_after = Pt(pbottom)
 	remove_blank_p(obj)
 
@@ -210,7 +211,8 @@ def cellMargin(val: int | float) -> int | float:
 def toCellMargin(val: int | float) -> int | float:
 	return val / 350
 
-def main(
+def build(
+	OUTPUT_PATH: str,
 	front_page_margins: tuple[int | float, int | float],
 	info_data: list[tuple[int, str]],
 	info_size: int | float,
@@ -305,37 +307,38 @@ def main(
 	logop = front_page.add_paragraph()
 	logop.alignment = WD_ALIGN_PARAGRAPH.CENTER
 	normalize_p(logop, 1, 1, 5, 0)
-	logop.add_run().add_picture('logo.png', width=Mm(54))
+	logop.add_run().add_picture(GLOBAL_PATH+'logo.png', width=Mm(54))
 
 	parseText(front_page, church_title.replace('\n', ''), church_title_size, 1.2, 13, center=True)
 	parseText(front_page, church_info.replace('\n', ''), church_info_size, 1.2, 2, center=True)
 
 	mass_info = [i.replace('\n', '') for i in mass_info]
 
-	match len(mass_info):
-		case 1:
-			mass_table = front_page.add_table(rows=1, cols=1)
-			mass_table_cells = [mass_table.cell(0, 0)]
-		case 2:
-			mass_table = front_page.add_table(rows=1, cols=2)
-			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(0, 1)]
-		case 3:
-			mass_table = front_page.add_table(rows=2, cols=2)
-			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1).merge(mass_table.cell(1, 1))]
-		case 4:
-			mass_table = front_page.add_table(rows=2, cols=2)
-			mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1), mass_table.cell(1, 1)]
-		case _:
-			cols = math.ceil(len(mass_info) / 2)
-			mass_table = front_page.add_table(rows=2, cols=cols)
-			mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
+	if mass_info:
+		match len(mass_info):
+			case 1:
+				mass_table = front_page.add_table(rows=1, cols=1)
+				mass_table_cells = [mass_table.cell(0, 0)]
+			case 2:
+				mass_table = front_page.add_table(rows=1, cols=2)
+				mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(0, 1)]
+			case 3:
+				mass_table = front_page.add_table(rows=2, cols=2)
+				mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1).merge(mass_table.cell(1, 1))]
+			case 4:
+				mass_table = front_page.add_table(rows=2, cols=2)
+				mass_table_cells = [mass_table.cell(0, 0), mass_table.cell(1, 0), mass_table.cell(0, 1), mass_table.cell(1, 1)]
+			case _:
+				cols = math.ceil(len(mass_info) / 2)
+				mass_table = front_page.add_table(rows=2, cols=cols)
+				mass_table_cells = [mass_table.cell(i, n) for n in range(cols) for i in (0, 1)]
 
-	for cell, txt in zip(mass_table_cells, mass_info):
-		normalize_cell(cell, margins=False)
-		cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+		for cell, txt in zip(mass_table_cells, mass_info):
+			normalize_cell(cell, margins=False)
+			cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
 
-		set_cell_margins(cell, 150, 0, 50, 0)
-		parseText(cell, txt, mass_info_size, 1, center=True)
+			set_cell_margins(cell, 150, 0, 50, 0)
+			parseText(cell, txt, mass_info_size, 1, center=True)
 
 	set_table_borders(info_table, color='000000', size=4, outer=False)
 
@@ -387,8 +390,6 @@ def main(
 	reading_table.cell(0, 2).width = right_half_width
 
 	remove_cell_borders(reading_table.cell(0, 1))
-	normalize_cell(reading_table.cell(0, 0))
-	normalize_cell(reading_table.cell(0, 2))
 
 	reading_types = {
 		'reading1': 'FIRST READING',
@@ -398,67 +399,43 @@ def main(
 		'gospel': 'GOSPEL'
 	}
 
-	# no assumed styling
-	# reading text will be one string, or list if psalm
+	reading_page_normalized = [False, False]
+	shown_types = []
 	for reading in readings:
+		alt_reading = reading['alt'] and reading['type'] in shown_types
+		safe_normalize_page(reading['left'], reading_page_normalized, reading_table)
+
 		reading_page = reading_table.cell(0, 0 if reading['left'] else 2)
-		# only show or if already showing one (keep list of showed types)
 		parseText(reading_page, '<b>'
-			+ ('OR' if reading['alt'] else reading_types[reading['type']])
-			+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not reading['alt'] and reading['sameline'] else '</b>')
+			+ ('OR' if alt_reading else reading_types[reading['type']])
+			+ ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not alt_reading and reading['sameline'] else '</b>')
 			+ '<_tab>'
 			+ reading['ref'],
 		reading_heading_size, 1, pbottom=reading_heading_spacing, left_right=left_half_width)
-		
+		shown_types.append(reading['type'])
+
 		if reading['title']:
 			parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 		if reading['type'] in ['reading1', 'reading2', 'gospel']:
 			parseText(reading_page, reading['text'], reading['size'], 1, pbottom=reading['margin'])
 		if reading['type'] in ['psalm', 'acclamation']:
-			if not reading['sameline'] and not reading['alt']:
+			if not reading['sameline'] and not alt_reading:
 				parseText(reading_page, '<i>wording may differ if sung</i>', reading_heading_size, 1, pbottom=reading_heading_spacing)
 
 			if reading['type'] == 'psalm':
 				parseText(reading_page, '<b>' + reading['text'][0] + '</b>', reading['size'], 1, pbottom=reading_heading_spacing)
 				parseText(reading_page, reading['text'][1], reading['size'], 1, pbottom=reading['margin'])
-			else: # acclamation
+			else:
 				parseText(reading_page, '<b>Alleluia, alleluia.</b><br>' + reading['text'] + '<br><b>Alleluia.</b>', reading['size'], 1, pbottom=reading['margin'])
 
-	parseText(reading_table.cell(0, 0 if copyright_page == 0 else 2), 
+	safe_normalize_page(copyright_page == 0, reading_page_normalized, reading_table)
+	safe_normalize_page(dpa_page == 0, reading_page_normalized, reading_table)
+
+	parseText(reading_table.cell(0, 0 if copyright_page == 0 else 2),
 		'''<i>The text of Sacred Scripture in the Lectionary is from the English Standard Version of the Bible, Catholic Edition (ESV-CE), published by Asian Trading Corporation, \u00a9 2017 Crossway. All rights are reserved. The English Standard Version of the Bible, Catholic Edition is published in the United Kingdom by SPCK Publishing. The Psalms and Canticles are from Abbey Psalms and Canticles \u00a9 2018 United States Conference of Catholic Bishops. Reprinted with permission.</i>''',
 		copyright_size, 1, pbottom=copyright_spacing)
-	parseText(reading_table.cell(0, 0 if dpa_page == 0 else 2), 
+	parseText(reading_table.cell(0, 0 if dpa_page == 0 else 2),
 		'''<i>Please note the Data Protection Act 2018 restricts the inclusion of the names of our sick unless their consent is given. If you wish to include someone\u2019s name here please speak to Fr John on completing a Consent Form from the sacristy.</i>''',
 		copyright_size, 1)
 
-	doc.save(f'out.docx')
-	convert(f'out.docx', f'out.pdf')
-
-#####
-
-# data = {}
-with open('output.json', encoding='utf-8') as f:
-	data = json.load(f)
-
-main(
-	front_page_margins=(data['front']['top-margin'], data['front']['left-margin']),
-	info_data=data['front']['latest-info'],
-	info_size=data['front']['latest-info-size'],
-	title=data['front']['title'],
-	title_size=data['front']['title-size'],
-	church_title=data['front']['church-title'],
-	church_title_size=data['front']['church-title-size'],
-	church_info=data['front']['church-info'],
-	church_info_size=data['front']['church-info-size'],
-	mass_info=data['front']['mass-info'],
-	mass_info_size=data['front']['mass-info-size'],
-	data=data['back'],
-	readings=data['readings']['readings'],
-	reading_margins=(data['readings']['options']['top-margin'], data['readings']['options']['left-margin']),
-	reading_heading_spacing=data['readings']['options']['heading-spacing'],
-	reading_heading_size=data['readings']['options']['heading-size'],
-	copyright_size=data['readings']['options']['copyright-size'],
-	copyright_spacing=data['readings']['options']['copyright-spacing'],
-	copyright_page=data['readings']['options']['copyright-page'],
-	dpa_page=data['readings']['options']['dpa-page'],
-)
+	doc.save(GLOBAL_PATH+OUTPUT_PATH)

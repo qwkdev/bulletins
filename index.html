@@ -329,6 +329,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					<textarea rows="8" data-name="text"></textarea>
 				</div>
 			</div>
+			<div id="readings-wrapper"></div>
 		</div></div>
 	</div>
 	<div id="buttons">
@@ -340,12 +341,12 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	<div id="top">
 		<h1>bulletins.mom</h1>
 		<button onclick="modal('load-readings-modal')">Load Readings</button>
-		<button onclick="modal('test-modal')">EXAMPLE</button>
+		<button onclick="modal('load-last-modal')">Edit Last</button>
 		<button onclick="modal('save-template-modal')">Save Template</button>
 		<button onclick="modal('load-template-modal')">Load Template</button>
 	</div>
 
-	<div id="embed"></div>
+	<iframe id="embed" src=""></iframe>
 
 	<dialog id="load-readings-modal">
 		<div class="modal">
@@ -373,6 +374,10 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	</div>
 
 	<script>
+		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
+		const SCRAPE_SERVER_URL = 'https://universalis.vercel.app/api';
+		const API_KEY = 'harveyjasper';
+
 		const waitModal = document.getElementById('wait');
 		async function wait(func, text='LOADING...') {
 			waitModal.querySelector('h1').innerHTML = text;
@@ -435,6 +440,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 
 		const readings = document.getElementById('readings');
+		const readingsWrapper = document.getElementById('readings-wrapper');
 		const readingTemplateToggle = document.getElementById('reading-collapse-toggle');
 		const readingTemplate = document.getElementById('reading-collapse');
 		function loadReadings(data) {
@@ -442,6 +448,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				.filter(r => r.alt)
 				.map(r => r.type);
 
+			readingsWrapper.innerHTML = '';
 			data.forEach((r, i) => {
 				// r['type'], r['alt'], r['ref'], r['title'];
 
@@ -449,7 +456,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				newReadingToggle.classList.remove('template');
 				newReadingToggle.innerHTML = (readingTypes[r.type] || 'Reading') + (r.alt ? ' (Alt)' : '') + newReadingToggle.innerHTML;
 				newReadingToggle.onclick = function() { collapse(`reading-collapse-${i+1}`); };
-				readings.appendChild(newReadingToggle);
+				readingsWrapper.appendChild(newReadingToggle);
 
 				const newReading = readingTemplate.cloneNode(true);
 				newReading.classList.remove('template');
@@ -458,6 +465,10 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				newReading.dataset.name = 'reading-collapse';
 				newReading.dataset.type = r.type;
 				newReading.dataset.alt = r.alt ? 1 : 0;
+
+				if (['acclamation', 'gospel'].includes(r.type)) {
+					newReading.querySelector('input[data-name="left"]').checked = true;
+				}
 
 				newReading.querySelector('textarea[data-name="ref"]').value = r.ref || '';
 				newReading.querySelector('textarea[data-name="title"]').value = r.title || '';
@@ -482,7 +493,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					newReading.querySelector('.value[data-name="show-hide"]').remove();
 				}
 
-				readings.appendChild(newReading);
+				readingsWrapper.appendChild(newReading);
 			});
 		}
 
@@ -498,9 +509,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			const day = getValue(modal, 'day', parseDate);
 			const month = getValue(modal, 'month', parseDate);
 			const year = getValue(modal, 'year', parseYear);
-			console.log(`${year}${month}${day}`);
 
-			await fetch('/readings2.json', { method: 'GET' })
+			await fetch(`${SCRAPE_SERVER_URL}/?date=${year}${month}${day}&key=${API_KEY}`, { method: 'GET' })
 				.then(resp => resp.json())
 				.then(data => {
 					if (data['success']) loadReadings(data['readings']);
@@ -530,8 +540,32 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			return Array.from(items).map(ele => names.map(p => getValue(ele, p[0], p[1])));
 		}
 
-		function save() {
-			build();
+		async function send_build(data) {
+			await fetch(`${SERVER_URL}/build?key=${API_KEY}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(data)
+			});
+		}
+
+		const iframe = document.getElementById('embed');
+		async function save() {
+			const resp = build();
+
+			await wait(async function() {
+				console.log(resp);
+				await fetch(`${SERVER_URL}/build?key=${API_KEY}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(resp)
+				});
+			});
+
+			iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${SERVER_URL}/get/${Date.now()}.docx?key=${API_KEY}`;
 		}
 
 		function build() {
@@ -622,8 +656,6 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		function modal(modalId) {
 			document.getElementById(modalId).showModal();
 		}
-
-		// modal('load-readings-modal');
 	</script>
 </body>
 </html>
