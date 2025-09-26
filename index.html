@@ -412,6 +412,9 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	</div>
 
 	<script>
+		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
+		const SCRAPE_SERVER_URL = 'https://universalis.vercel.app/api';
+
 		async function checkAPIKey(key) {
 			const resp = await fetch(`${SERVER_URL}/check?key=${key}`, { method: 'GET' })
 				.then(resp => resp.json())
@@ -419,6 +422,9 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			return resp && resp['valid'];
 		}
+
+
+		
 		async function getAPIKey() {
 			let current = localStorage.getItem('bulletins-api-key');
 			if (current && await checkAPIKey(current)) {
@@ -435,12 +441,10 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					alert('Invalid API Key, please try again.');
 				}
 			}
-
 		}
-		const API_KEY = getAPIKey();
 
-		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
-		const SCRAPE_SERVER_URL = 'https://universalis.vercel.app/api';
+		let API_KEY;
+		(async () => { API_KEY = await getAPIKey(); })();
 
 		const waitModal = document.getElementById('wait');
 		async function wait(func, text='LOADING...') {

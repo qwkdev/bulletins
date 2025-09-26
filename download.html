@@ -28,8 +28,35 @@
 	<p>Downloading...</p>
 	
 	<script>
-		const API_KEY = 'harveyjasper';
 		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
+
+		async function checkAPIKey(key) {
+			const resp = await fetch(`${SERVER_URL}/check?key=${key}`, { method: 'GET' })
+				.then(resp => resp.json())
+				.catch(e => console.error('Error checking API key:', e));
+
+			return resp && resp['valid'];
+		}
+		async function getAPIKey() {
+			let current = localStorage.getItem('bulletins-api-key');
+			if (current && await checkAPIKey(current)) {
+				return current;
+			}
+			localStorage.removeItem('bulletins-api-key');
+
+			while (1) {
+				const newKey = prompt('Enter API Key:');
+				if (newKey && await checkAPIKey(newKey)) {
+					localStorage.setItem('bulletins-api-key', newKey);
+					return newKey;
+				} else {
+					alert('Invalid API Key, please try again.');
+				}
+			}
+		}
+
+		let API_KEY;
+		(async () => { API_KEY = await getAPIKey(); })();
 
 		window.location.href = `${SERVER_URL}/get/docx?key=${API_KEY}`;
 	</script>
