@@ -60,7 +60,7 @@ body {
 		color: #0007;
 	}
 }
-@media only screen and (max-width: 90vh) {
+@media only screen and (max-width: 95vh) {
 	#mobile-wall {
 		display: block;
 	}

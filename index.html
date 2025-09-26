@@ -422,9 +422,6 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			return resp && resp['valid'];
 		}
-
-
-		
 		async function getAPIKey() {
 			let current = localStorage.getItem('bulletins-api-key');
 			if (current && await checkAPIKey(current)) {
