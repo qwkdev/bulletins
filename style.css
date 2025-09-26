@@ -17,6 +17,55 @@ body {
 	background: #75b5;
 	overflow: hidden;
 }
+
+#mobile-wall {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+
+	background: #fff;
+	z-index: 10000;
+
+	p {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+
+		margin: 0;
+		width: 70vw;
+		
+		font-weight: 500;
+		font-family: Arial;
+		font-size: 5vw;
+		text-align: center;
+		color: #000;
+	}
+	h2 {
+		position: absolute;
+		bottom: 1vw;
+		left: 50%;
+		transform: translateX(-50%);
+
+		margin: 0;
+		width: 100vw;
+		
+		font-weight: 500;
+		font-family: monospace;
+		font-size: 4vw;
+		text-align: center;
+		color: #0007;
+	}
+}
+@media only screen and (max-width: 90vh) {
+	#mobile-wall {
+		display: block;
+	}
+}
+
 #top {
 	position: absolute;
 	top: 0;
@@ -188,6 +237,7 @@ body {
 
 			font-family: monospace;
 			font-size: .7vw;
+			line-height: 0;
 
 			background: none;
 			border-radius: .25vw;
@@ -356,6 +406,10 @@ dialog {
 		background: #ffffff;
 		border-radius: 1vw;
 
+		button:focus {
+			outline: none;
+		}
+
 		h1.header {
 			text-align: center;
 		}
@@ -369,6 +423,24 @@ dialog {
 					width: 3vw;
 				}
 			}
+			.value-wrap button.action {
+				padding: 0 1vw;
+				width: max-content;
+				height: 1.5vw;
+				font-family: Arial;
+				background: #07f;
+				color: #fff;
+				&:hover {
+					background: #18f;
+				}
+			}
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			column-gap: calc(var(--margin) / 2);
+			row-gap: var(--margin);
 		}
 
 		.choice {

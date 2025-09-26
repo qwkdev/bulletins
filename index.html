@@ -8,6 +8,14 @@
 	<link rel="stylesheet" href="style.css">
 </head>
 <body>
+	<div id="mobile-wall">
+		<p>
+			Your screen is too small to use this app,<br>
+			Please use a wider screen.
+		</p>
+		<h2>bulletins.mom</h2>
+	</div>
+
 	<div class="bg bgc1"></div>
 	<div class="bg bgc2"></div>
 	<div class="bg bgc3"></div>
@@ -341,9 +349,9 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	<div id="top">
 		<h1>bulletins.mom</h1>
 		<button onclick="modal('load-readings-modal')">Load Readings</button>
-		<button onclick="modal('load-last-modal')">Edit Last</button>
+		<button onclick="loadLast()">Edit Last</button>
 		<button onclick="modal('save-template-modal')">Save Template</button>
-		<button onclick="modal('load-template-modal')">Load Template</button>
+		<button onclick="loadTemplatesModal()">Load Template</button>
 	</div>
 
 	<iframe id="embed" src=""></iframe>
@@ -363,20 +371,76 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				</div>
 			</div>
 			<div class="choice">
-				<button onclick="">Load Blank Slate</button>
+				<button onclick="blankReadings()">Load Blank Slate</button>
 				<button class="action" onclick="wait(getReadings)">Get Readings</button>
 			</div>
 		</div>
-	</div>
+	</dialog>
+
+	<dialog id="load-template-modal">
+		<div class="modal">
+			<h1 class="header">Load Template</h1>
+			<div class="template value">
+				<p data-name="name"></p>
+				<div class="value-wrap">
+					<button class="action" data-name="load">Load</button>
+					<button data-name="delete">X</button>
+				</div>
+			</div>
+			<div class="grid">
+			</div>
+		</div>
+	</dialog>
+
+	<dialog id="save-template-modal">
+		<div class="modal">
+			<h1 class="header">Save Template</h1>
+			<div class="value">
+				<p>Enter name:</p>
+				<div class="value-wrap" style="width: 50%;">
+					<input style="width: 100%;" type="text" data-name="name" oninput="safeFilename(this)">
+				</div>
+			</div>
+			<div class="choice">
+				<button class="action" onclick="saveTemplate()">Save</button>
+			</div>
+		</div>
+	</dialog>
 
 	<div id="wait" hidden>
 		<h1>LOADING...</h1>
 	</div>
 
 	<script>
+		async function checkAPIKey(key) {
+			const resp = await fetch(`${SERVER_URL}/check?key=${key}`, { method: 'GET' })
+				.then(resp => resp.json())
+				.catch(e => console.error('Error checking API key:', e));
+
+			return resp && resp['valid'];
+		}
+		async function getAPIKey() {
+			let current = localStorage.getItem('bulletins-api-key');
+			if (current && await checkAPIKey(current)) {
+				return current;
+			}
+			localStorage.removeItem('bulletins-api-key');
+
+			while (1) {
+				const newKey = prompt('Enter API Key:');
+				if (newKey && await checkAPIKey(newKey)) {
+					localStorage.setItem('bulletins-api-key', newKey);
+					return newKey;
+				} else {
+					alert('Invalid API Key, please try again.');
+				}
+			}
+
+		}
+		const API_KEY = getAPIKey();
+
 		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
 		const SCRAPE_SERVER_URL = 'https://universalis.vercel.app/api';
-		const API_KEY = 'harveyjasper';
 
 		const waitModal = document.getElementById('wait');
 		async function wait(func, text='LOADING...') {
@@ -400,6 +464,11 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			prevBtn.hidden = cur == 0;
 			nextBtn.hidden = cur == 2;
 		}
+		function setForm(num) {
+			forms.style.setProperty("--form", num);
+			prevBtn.hidden = num == 0;
+			nextBtn.hidden = num == 2;
+		}
 
 		function collapse(collapseId) {
 			const col = document.getElementById(collapseId);
@@ -415,6 +484,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			if (reverse) multi.insertBefore(clone, multi.children[1]);
 			else multi.appendChild(clone);
+
+			return clone;
 		}
 		function multiremove(btn) {
 			btn.parentElement.parentElement.parentElement.remove();
@@ -468,10 +539,16 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 				if (['acclamation', 'gospel'].includes(r.type)) {
 					newReading.querySelector('input[data-name="left"]').checked = true;
+					if (r.sameline !== undefined) newReading.querySelector('input[data-name="sameline"]').checked = r.sameline;
 				}
 
 				newReading.querySelector('textarea[data-name="ref"]').value = r.ref || '';
 				newReading.querySelector('textarea[data-name="title"]').value = r.title || '';
+
+				if (r.include !== undefined) newReading.querySelector('input[data-name="include"]').checked = r.include;
+				if (r.left !== undefined) newReading.querySelector('input[data-name="left"]').checked = !r.left;
+				if (r.size !== undefined) newReading.querySelector('input[data-name="size"]').value = r.size;
+				if (r.margin !== undefined) newReading.querySelector('input[data-name="margin"]').value = r.margin;
 
 				const editText = newReading.querySelector('textarea[data-name="text"]');
 				if (r.type !== 'psalm') {
@@ -510,6 +587,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			const month = getValue(modal, 'month', parseDate);
 			const year = getValue(modal, 'year', parseYear);
 
+			modal.close();
 			await fetch(`${SCRAPE_SERVER_URL}/?date=${year}${month}${day}&key=${API_KEY}`, { method: 'GET' })
 				.then(resp => resp.json())
 				.then(data => {
@@ -518,7 +596,20 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				})
 				.catch(e => console.error('Error getting readings:', e));
 
-			modal.close();
+			setForm(2);
+			save();
+		}
+
+		function blankReadings() {
+			document.getElementById('load-readings-modal').close();
+			loadReadings([
+				{ type: 'reading1',    alt: false, ref: null, title: null, text: [null]},
+				{ type: 'psalm',       alt: false, ref: null, title: null, text: [null]},
+				{ type: 'reading2',    alt: false, ref: null, title: null, text: [null]},
+				{ type: 'acclamation', alt: false, ref: null, title: null, text: [null]},
+				{ type: 'gospel',      alt: false, ref: null, title: null, text: [null]}
+			]);
+			setForm(2);
 		}
 
 		function parseText(text) {
@@ -539,15 +630,29 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			if (names.length === 1) return Array.from(items).map(ele => getValue(ele, names[0][0], names[0][1]));
 			return Array.from(items).map(ele => names.map(p => getValue(ele, p[0], p[1])));
 		}
-
-		async function send_build(data) {
-			await fetch(`${SERVER_URL}/build?key=${API_KEY}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(data)
-			});
+		function setValue(parent, name, value) {
+			const ele = parent.querySelector(`input[data-name="${name}"], textarea[data-name="${name}"]`);
+			if (!ele) return;
+			if (ele.type === 'checkbox') { 
+				ele.checked = value; 
+				return;
+			}
+			ele.value = value;
+		}
+		function setMulti(multiId, list, ...names) {
+			const multi = document.getElementById(multiId);
+			multi.querySelectorAll(':scope > div:not(.template)').forEach(ele => ele.remove());
+			if (names.length === 1) {
+				list.forEach(item => {
+					const newValue = multiadd(multiId);
+					setValue(newValue, names[0], item);
+				});
+			} else {
+				list.forEach(item => {
+					const newValue = multiadd(multiId);
+					names.forEach((name, i) => setValue(newValue, name, item[i]));
+				});
+			}
 		}
 
 		const iframe = document.getElementById('embed');
@@ -568,44 +673,43 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${SERVER_URL}/get/${Date.now()}.docx?key=${API_KEY}`;
 		}
 
+		const buildTemplate = {
+			front: {
+				'top-margin': parseFloat,
+				'left-margin': parseFloat,
+				'title': parseText,
+				'title-size': parseFloat,
+				'church-title': parseText,
+				'church-title-size': parseFloat,
+				'church-info': parseText,
+				'church-info-size': parseFloat,
+				'mass-info-size': parseFloat,
+				'latest-info-size': parseFloat
+			},
+			readings: {
+				'top-margin': parseFloat,
+				'left-margin': parseFloat,
+				'heading-spacing': parseFloat,
+				'heading-size': parseFloat,
+				'copyright-spacing': parseFloat,
+				'copyright-size': parseFloat,
+				'copyright-page': c => c ? 1 : 0,
+				'dpa-page': c => c ? 1 : 0
+			}
+		};
 		function build() {
-			const template = {
-				front: {
-					'top-margin': parseFloat,
-					'left-margin': parseFloat,
-					'title': parseText,
-					'title-size': parseFloat,
-					'church-title': parseText,
-					'church-title-size': parseFloat,
-					'church-info': parseText,
-					'church-info-size': parseFloat,
-					'mass-info-size': parseFloat,
-					'latest-info-size': parseFloat
-				},
-				readings: {
-					'top-margin': parseFloat,
-					'left-margin': parseFloat,
-					'heading-spacing': parseFloat,
-					'heading-size': parseFloat,
-					'copyright-spacing': parseFloat,
-					'copyright-size': parseFloat,
-					'copyright-page': c => c ? 1 : 0,
-					'dpa-page': c => c ? 1 : 0
-				}
-			};
-
 			const front = document.getElementById('front');
 			const readingSection = document.getElementById('readings');
 			const output = {
 				front: Object.fromEntries(
-					Object.entries(template.front).map(
+					Object.entries(buildTemplate.front).map(
 						([name, func]) => [name, getValue(front, name, func)]
 					)
 				),
 				back: getMulti('notices', ['size', parseFloat], ['margins', parseFloat], ['text', parseText]),
 				readings: {
 					options: Object.fromEntries(
-						Object.entries(template.readings).map(
+						Object.entries(buildTemplate.readings).map(
 							([name, func]) => [name, getValue(readingSection, name, func)]
 						)
 					),
@@ -618,8 +722,9 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			const readingCollapses = readingSection.querySelectorAll('.collapse[data-name="reading-collapse"]');
 			readingCollapses.forEach(ele => {
-				if (getValue(ele, 'include') === false) return;
+				const include = getValue(ele, 'include');
 				const newReading = {
+					include: include === null ? true : include,
 					left: !getValue(ele, 'left'),
 					size: getValue(ele, 'size', parseFloat),
 					margin: getValue(ele, 'margin', parseFloat),
@@ -643,6 +748,118 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			});
 
 			return output;
+		}
+
+		function loadTemplate(template) {
+			const front = document.getElementById('front');
+			if (template.front) {
+				for (let name in buildTemplate.front) {
+					if (template.front[name] !== undefined) {
+						setValue(front, name, template.front[name]);
+					}
+				}
+				setMulti('mass-info', template.front['mass-info'] || [], 'text');
+				setMulti('latest-info', template.front['latest-info'].map(l => [l[0] === 1, l[1], l[2]]) || [], 'centered', 'lines', 'text');
+			}
+			if (template.back) {
+				setMulti('notices', template.back || [], 'size', 'margins', 'text');
+			}
+			const readingSection = document.getElementById('readings');
+			if (template.readings) {
+				for (let name in buildTemplate.readings) {
+					if (template.readings.options[name] !== undefined) {
+						setValue(readingSection, name, ['copyright-page', 'dpa-page'].includes(name) ? template.readings.options[name] === 1 : template.readings.options[name]);
+					}
+				}
+				let formattedReadings = structuredClone(template.readings.readings);
+				formattedReadings.forEach(r => {
+					if (r.type === 'psalm') {
+						r.text = [r.text[0], r.text[1].split('<bv><br>').map(p => p.split('<br>'))];
+					}
+					else {
+						r.text = r.text.split('<br>');
+					}
+				});
+				loadReadings(formattedReadings);
+			}
+		}
+
+		function loadLast() {
+			wait(async function() {
+				await fetch(`${SERVER_URL}/latest?key=${API_KEY}`, { method: 'GET' })
+					.then(resp => resp.json())
+					.then(data => loadTemplate(data))
+					.catch(e => console.error('Error getting last template:', e));
+			}, 'LOADING...');
+			save();
+		}
+
+		function loadTemplateList(files) {
+			const ltModal = document.getElementById('load-template-modal');
+			const template = ltModal.querySelector('.template');
+			const grid = ltModal.querySelector('.grid');
+
+			if (!files || files.length === 0) {
+				grid.innerHTML = '<p class="header">No templates found</p>';
+				return;
+			}
+
+			grid.innerHTML = '';
+			files.forEach(file => {
+				const clone = template.cloneNode(true);
+				clone.classList.remove('template');
+
+				grid.appendChild(clone);
+				clone.querySelector('p[data-name="name"]').innerText = file;
+				clone.querySelector('button[data-name="load"]').onclick = async function() {
+					ltModal.close();
+					await wait(async function() {
+						await fetch(`${SERVER_URL}/template/get/${file}?key=${API_KEY}`, { method: 'GET' })
+							.then(resp => resp.json())
+							.then(data => loadTemplate(data))
+							.catch(e => console.error('Error getting template:', e));
+					}, 'LOADING...');
+					save();
+				};
+				clone.querySelector('button[data-name="delete"]').onclick = async function() {
+					ltModal.close();
+					await wait(async function() {
+						await fetch(`${SERVER_URL}/template/delete/${file}?key=${API_KEY}`, { method: 'GET' })
+							.catch(e => console.error('Error deleting template:', e));
+					}, 'LOADING...');
+					loadTemplatesModal();
+				};
+			});
+		}
+		async function loadTemplatesModal() {
+			await wait(async function() {
+				await fetch(`${SERVER_URL}/templates?key=${API_KEY}`, { method: 'GET' })
+					.then(resp => resp.json())
+					.then(data => loadTemplateList(data.files))
+					.catch(e => console.error('Error getting templates:', e));
+			});
+			modal('load-template-modal');
+		}
+
+		function safeFilename(ele) {
+			ele.value = ele.value.replace(/[^a-zA-Z0-9\-_ ]/g, '')
+		}
+		async function saveTemplate() {
+			const stModal = document.getElementById('save-template-modal');
+			const name = getValue(stModal, 'name').replace(/[^a-zA-Z0-9\-_ ]/g, '').trim();
+
+			stModal.close();
+
+			const data = build();
+			await wait(async function() {
+				await fetch(`${SERVER_URL}/template/save/${name}?key=${API_KEY}`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(data)
+				});
+			}, 'LOADING...');
 		}
 
 		const modals = document.querySelectorAll('dialog');
