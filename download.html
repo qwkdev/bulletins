@@ -44,7 +44,7 @@
 			}
 			localStorage.removeItem('bulletins-api-key');
 
-			while (1) {
+			while (true) {
 				const newKey = prompt('Enter API Key:');
 				if (newKey && await checkAPIKey(newKey)) {
 					localStorage.setItem('bulletins-api-key', newKey);
