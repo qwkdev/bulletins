@@ -5,7 +5,486 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Bulletins</title>
 
-	<link rel="stylesheet" href="style.css">
+	<style>
+:root {
+	--forms-width: 40vw;
+	--forms-height: 87vh;
+	--margin: 1vw;
+	--border: #0013;
+	--border-focus: #0016;
+	--hover: #00001117;
+}
+.template {
+	display: none !important;
+}
+body {
+	margin: 0;
+	background: #75b5;
+	overflow: hidden;
+}
+#mobile-wall {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: #fff;
+	z-index: 10000;
+}
+#mobile-wall p {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	margin: 0;
+	width: 70vw;
+	font-weight: 500;
+	font-family: Arial;
+	font-size: 5vw;
+	text-align: center;
+	color: #000;
+}
+#mobile-wall h2 {
+	position: absolute;
+	bottom: 1vw;
+	left: 50%;
+	transform: translateX(-50%);
+	margin: 0;
+	width: 100vw;
+	font-weight: 500;
+	font-family: monospace;
+	font-size: 4vw;
+	text-align: center;
+	color: #0007;
+}
+@media only screen and (max-width: 95vh) {
+	#mobile-wall {
+			display: block;
+	}
+}
+#top {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: calc(100vw - var(--forms-width));
+	height: calc(10vh - var(--margin));
+	background: #fff;
+	border-bottom-left-radius: 1vw;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-sizing: border-box;
+	padding: calc(var(--margin) * 0.75);
+	gap: calc(var(--margin) * 0.75);
+}
+#top h1 {
+	margin: 0 var(--margin);
+	font-family: monospace;
+	font-weight: 500;
+	font-size: 2vh;
+	transform: translateY(-12%);
+}
+#top button {
+	background: none;
+	width: 100%;
+	height: 100%;
+	font-size: 1.5vh;
+	border-radius: .5vw;
+	border: 1px solid var(--border);
+}
+#embed {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+	width: calc(100vw - var(--forms-width));
+	height: 90vh;
+	background: #fff;
+	border-top-left-radius: 1vw;
+	border: none;
+}
+#forms {
+	--form: 0;
+	overflow: hidden;
+	width: var(--forms-width);
+	height: var(--forms-height);
+	position: absolute;
+	top: var(--margin);
+	left: 0;
+	display: grid;
+	grid-template-columns: repeat(3, var(--forms-width));
+}
+#forms .wrapper {
+	border-radius: 1vw;
+	width: calc(100% - (var(--margin) * 2));
+	height: var(--forms-height);
+	margin: 0 var(--margin);
+	padding: var(--margin) 0;
+	box-sizing: border-box;
+	transform: translateX(calc(-1 * (100% + (var(--margin) * 2)) * var(--form)));
+	transition: .7s ease-in-out;
+	background: #fff;
+}
+#readings-wrapper {
+	width: 100%;
+	height: min-content;
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin);
+}
+.form, .modal {
+	width: 100%;
+	height: 100%;
+	padding: 0 var(--margin);
+	box-sizing: border-box;
+	overflow-x: hidden;
+	overflow-y: scroll;
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin);
+}
+.form .value, .form .header, .form .text, .form .multi-add, .modal .value, .modal .header, .modal .text, .modal .multi-add {
+	width: 100%;
+	height: max-content;
+	margin: 0;
+	border-radius: .5vw;
+	border: 1px solid var(--border);
+	padding: .5vw;
+	box-sizing: border-box;
+}
+.form input, .form textarea, .modal input, .modal textarea {
+	border: 1px solid var(--border);
+	border-radius: .5vw;
+	background: #fff;
+}
+.form input:focus, .form textarea:focus, .modal input:focus, .modal textarea:focus {
+	outline: none;
+	border-color: var(--border-focus);
+}
+.form textarea, .modal textarea {
+	margin: 0;
+	padding: .5vw;
+	box-sizing: border-box;
+}
+.form .header, .modal .header {
+	font-family: Arial;
+	padding-left: .7vw;
+	font-weight: 700;
+}
+.form h1.header, .modal h1.header {
+	font-size: 1.5vw;
+}
+.form p.header, .modal p.header {
+	font-size: 1vw;
+	text-align: center;
+}
+.form .value-wrap, .modal .value-wrap {
+	display: flex;
+	align-items: center;
+	gap: .25vw;
+}
+.form .value, .form .inner-value, .modal .value, .modal .inner-value {
+	padding-left: .7vw;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.form .value p, .form .value input[type="text"], .form .value input[type="number"], .form .value span:not(.slider), .form .inner-value p, .form .inner-value input[type="text"], .form .inner-value input[type="number"], .form .inner-value span:not(.slider), .modal .value p, .modal .value input[type="text"], .modal .value input[type="number"], .modal .value span:not(.slider), .modal .inner-value p, .modal .inner-value input[type="text"], .modal .inner-value input[type="number"], .modal .inner-value span:not(.slider) {
+	margin: 0;
+	font-size: .7vw;
+	font-family: Arial;
+}
+.form .value p, .form .inner-value p, .modal .value p, .modal .inner-value p {
+	font-size: .8vw;
+}
+.form .value input[type="text"], .form .value input[type="number"], .form .inner-value input[type="text"], .form .inner-value input[type="number"], .modal .value input[type="text"], .modal .value input[type="number"], .modal .inner-value input[type="text"], .modal .inner-value input[type="number"] {
+	width: 5vw;
+	height: 1.5vw;
+	padding-left: .4vw;
+}
+.form .value button, .form .inner-value button, .modal .value button, .modal .inner-value button {
+	width: 1vw;
+	height: 1vw;
+	font-family: monospace;
+	font-size: .7vw;
+	line-height: 0;
+	background: none;
+	border-radius: .25vw;
+	border: 1px solid var(--border);
+}
+.form .value button:hover, .form .inner-value button:hover, .modal .value button:hover, .modal .inner-value button:hover {
+	background: var(--hover);
+}
+.form .value label, .form .inner-value label, .modal .value label, .modal .inner-value label {
+	--slider-margin: .25vw;
+	--slider-width: 3vw;
+	--slider-height: 1.5vw;
+	--slider-padding: .2vw;
+	position: relative;
+	width: var(--slider-width);
+	height: var(--slider-height);
+	margin: 0 var(--slider-margin);
+}
+.form .value label input[type="checkbox"], .form .inner-value label input[type="checkbox"], .modal .value label input[type="checkbox"], .modal .inner-value label input[type="checkbox"] {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+.form .value label .slider, .form .inner-value label .slider, .modal .value label .slider, .modal .inner-value label .slider {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	border-radius: var(--slider-height);
+	background: #ccc;
+	transition: .3s;
+	cursor: pointer;
+}
+.form .value label .slider::before, .form .inner-value label .slider::before, .modal .value label .slider::before, .modal .inner-value label .slider::before {
+	content: "";
+	position: absolute;
+	width: calc(var(--slider-height) - (var(--slider-padding) * 2));
+	height: calc(var(--slider-height) - (var(--slider-padding) * 2));
+	top: var(--slider-padding);
+	left: var(--slider-padding);
+	border-radius: 50%;
+	background: #fff;
+	transition: .3s;
+}
+.form .value label input[type="checkbox"]:checked + .slider, .form .inner-value label input[type="checkbox"]:checked + .slider, .modal .value label input[type="checkbox"]:checked + .slider, .modal .inner-value label input[type="checkbox"]:checked + .slider {
+	background: #07f;
+}
+.form .value label input[type="checkbox"]:checked + .slider::before, .form .inner-value label input[type="checkbox"]:checked + .slider::before, .modal .value label input[type="checkbox"]:checked + .slider::before, .modal .inner-value label input[type="checkbox"]:checked + .slider::before {
+	transform: translateX(calc(var(--slider-width) - var(--slider-height)));
+}
+.form .inner-value, .modal .inner-value {
+	padding-left: .2vw;
+}
+.form .text textarea, .modal .text textarea {
+	width: 100%;
+	resize: none;
+	font-size: .8vw;
+	margin-top: .6vw;
+	font-family: Arial;
+}
+.form .justtext, .modal .justtext {
+	width: 100%;
+	resize: none;
+	font-size: .8vw;
+	font-family: Arial;
+}
+.form .collapse, .form .multi, .modal .collapse, .modal .multi {
+	display: flex;
+	flex-direction: column;
+	gap: var(--margin);
+}
+.form .collapse[hidden], .modal .collapse[hidden] {
+	display: none;
+}
+.form .collapse-toggle, .modal .collapse-toggle {
+	position: relative;
+}
+.form .collapse-toggle svg, .modal .collapse-toggle svg {
+	height: 80%;
+	width: auto;
+	position: absolute;
+	top: 10%;
+	right: 1%;
+	transition: .2s;
+}
+.form .collapse-toggle:has(+ .collapse[hidden]) svg, .modal .collapse-toggle:has(+ .collapse[hidden]) svg {
+	top: 9%;
+	right: .5%;
+	transform: rotate(-90deg);
+}
+.form .multi, .modal .multi {
+	display: none;
+}
+.form .multi:has(> :nth-child(2)), .modal .multi:has(> :nth-child(2)) {
+	display: flex;
+}
+.form .multi-add, .modal .multi-add {
+	background: none;
+	font-size: 2vw;
+	margin: 0;
+	padding: 0;
+	padding-bottom: .3vw;
+	font-family: monospace;
+}
+.form .multi-add:hover, .modal .multi-add:hover {
+	background: var(--hover);
+}
+dialog {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: #0017;
+}
+dialog .modal {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 30vw;
+	height: max-content;
+	max-height: 80vh;
+	box-sizing: border-box;
+	padding: var(--margin);
+	background: #ffffff;
+	border-radius: 1vw;
+}
+dialog .modal button:focus {
+	outline: none;
+}
+dialog .modal h1.header {
+	text-align: center;
+}
+dialog .modal .value .date-input {
+	display: flex;
+	align-items: center;
+	gap: .25vw;
+}
+dialog .modal .value .date-input input[type="number"] {
+	width: 3vw;
+}
+dialog .modal .value .value-wrap button.action {
+	padding: 0 1vw;
+	width: max-content;
+	height: 1.5vw;
+	font-family: Arial;
+	background: #07f;
+	color: #fff;
+}
+dialog .modal .value .value-wrap button.action:hover {
+	background: #18f;
+}
+dialog .modal .grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap: calc(var(--margin) / 2);
+	row-gap: var(--margin);
+}
+dialog .modal .choice {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: .25vw;
+}
+dialog .modal .choice button {
+	width: 100%;
+	height: 2.5vw;
+	border-radius: .5vw;
+	border: 1px solid var(--border);
+	background: none;
+	font-size: 1vw;
+	margin: 0;
+	padding: 0;
+	font-family: Arial;
+}
+dialog .modal .choice button:hover {
+	background: var(--hover);
+}
+dialog .modal .choice button.action {
+	background: #07f;
+	color: #fff;
+}
+dialog .modal .choice button.action:hover {
+	background: #18f;
+}
+#wait {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background: #001a;
+}
+#wait h1 {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	margin: 0;
+	padding: var(--margin) calc(var(--margin) * 2);
+	border-radius: 1vw;
+	font-size: 5vh;
+	font-family: Arial;
+	text-align: center;
+	z-index: 100;
+	background: #fff;
+}
+#buttons {
+	--outer-radius: 1vw;
+	--button-height: calc(100vh - var(--forms-height) - (var(--margin) * 2.5));
+	width: calc(var(--forms-width) - (var(--margin) * 2));
+	height: var(--button-height);
+	position: absolute;
+	bottom: var(--margin);
+	left: var(--margin);
+	border-radius: 1vw;
+	display: flex;
+	align-items: center;
+	gap: calc(var(--margin) / 2);
+}
+#buttons button {
+	height: var(--button-height);
+	background: #fff;
+	border-radius: .5vw;
+	border: none;
+}
+#buttons #prev, #buttons #next {
+	width: 5vw;
+	font-family: monospace;
+	font-size: calc(var(--button-height) * 0.5);
+	padding-bottom: calc(var(--button-height) * 0.12);
+}
+#buttons #save {
+	flex: 1;
+	font-family: Arial;
+	font-size: calc(var(--button-height) * 0.3);
+	padding-bottom: calc(var(--button-height) * 0.01);
+}
+#buttons #next, #buttons:has(#next[hidden]) #save {
+	border-top-right-radius: var(--outer-radius) !important;
+	border-bottom-right-radius: var(--outer-radius) !important;
+}
+#buttons #prev, #buttons:has(#prev[hidden]) #save {
+	border-top-left-radius: var(--outer-radius) !important;
+	border-bottom-left-radius: var(--outer-radius) !important;
+}
+.bg, .bg2 {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -50%;
+	right: -50%;
+	z-index: -1;
+}
+.bgc1 { animation: slide 2.0s ease-in-out infinite alternate; }
+.bgc2 { animation: slide 2.5s ease-in-out infinite alternate; }
+.bgc3 { animation: slide 3.0s ease-in-out infinite alternate; }
+.bgc4 { animation: slide 3.5s ease-in-out infinite alternate; }
+.bgc5 { animation: slide 4.0s ease-in-out infinite alternate; }
+.bg {
+	opacity: .25;
+	background: linear-gradient(-60deg, #c9e 50%, #75b 50%);
+}
+.bg.bgc1 { animation-direction: alternate-reverse; }
+.bg.bgc3 { animation-direction: alternate-reverse; }
+.bg2 {
+	opacity: .15;
+	background: linear-gradient(60deg, #c9e 50%, #75b 50%);
+}
+.bg2.bgc3 { animation-direction: alternate-reverse; }
+.bg2.bgc5 { animation-direction: alternate-reverse; }
+@keyframes slide {
+	0% { transform: translateX(-25%); }
+	100% { transform: translateX(25%); }
+}
+	</style>
 </head>
 <body>
 	<div id="mobile-wall">
