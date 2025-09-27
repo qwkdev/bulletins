@@ -58,8 +58,9 @@
 		let API_KEY;
 		(async () => {
 			API_KEY = await getAPIKey();
-			console.log(API_KEY);
-			// window.location.href = `${SERVER_URL}/get/docx?key=${API_KEY}`;
+			setTimeout(() => {
+				window.location.href = `${SERVER_URL}/get/docx?key=${API_KEY}`;
+			}, 500);
 		})();
 	</script>
 </body>
