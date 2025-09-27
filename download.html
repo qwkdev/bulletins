@@ -56,9 +56,10 @@
 		}
 
 		let API_KEY;
-		(async () => { API_KEY = await getAPIKey(); })();
-
-		window.location.href = `${SERVER_URL}/get/docx?key=${API_KEY}`;
+		(async () => {
+			API_KEY = await getAPIKey();
+			window.location.href = `${SERVER_URL}/get/docx?key=${API_KEY}`;
+		})();
 	</script>
 </body>
 </html>
