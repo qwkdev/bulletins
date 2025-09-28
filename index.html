@@ -22,7 +22,7 @@
 }
 body {
 	margin: 0;
-	background: #75b5;
+	background: #0f04;
 	overflow: hidden;
 }
 #mobile-wall {
@@ -463,9 +463,9 @@ dialog .modal .choice button.action:hover {
 	display: none;
 	position: absolute;
 	top: 0;
-	bottom: 0;
-	left: -50%;
-	right: -50%;
+	left: calc(-50 * var(--vw));
+	width: calc(200 * var(--vw));
+	height: calc(100 * var(--vh));
 	z-index: -1;
 }
 .bgc1 { animation: slide 2.0s ease-in-out infinite alternate; }
