@@ -16,6 +16,7 @@
 	--border: #0013;
 	--border-focus: #0016;
 	--hover: #00001117;
+	--action: #07f;
 }
 .template {
 	display: none !important;
@@ -257,7 +258,7 @@ body {
 	transition: .3s;
 }
 .form .value label input[type="checkbox"]:checked + .slider, .form .inner-value label input[type="checkbox"]:checked + .slider, .modal .value label input[type="checkbox"]:checked + .slider, .modal .inner-value label input[type="checkbox"]:checked + .slider {
-	background: #07f;
+	background: var(--action);
 }
 .form .value label input[type="checkbox"]:checked + .slider::before, .form .inner-value label input[type="checkbox"]:checked + .slider::before, .modal .value label input[type="checkbox"]:checked + .slider::before, .modal .inner-value label input[type="checkbox"]:checked + .slider::before {
 	transform: translateX(calc(var(--slider-width) - var(--slider-height)));
@@ -359,7 +360,7 @@ dialog .modal .value .value-wrap button.action {
 	width: max-content;
 	height: calc(1.5 * var(--vw));
 	font-family: Arial;
-	background: #07f;
+	background: var(--action);
 	color: #fff;
 }
 dialog .modal .value .value-wrap button.action:hover {
@@ -392,7 +393,7 @@ dialog .modal .choice button:hover {
 	background: var(--hover);
 }
 dialog .modal .choice button.action {
-	background: #07f;
+	background: var(--action);
 	color: #fff;
 }
 dialog .modal .choice button.action:hover {
@@ -459,36 +460,6 @@ dialog .modal .choice button.action:hover {
 	border-top-left-radius: var(--outer-radius) !important;
 	border-bottom-left-radius: var(--outer-radius) !important;
 }
-.bg, .bg2 {
-	display: none;
-	position: absolute;
-	top: 0;
-	left: calc(-50 * var(--vw));
-	width: calc(200 * var(--vw));
-	height: calc(100 * var(--vh));
-	z-index: -1;
-}
-.bgc1 { animation: slide 2.0s ease-in-out infinite alternate; }
-.bgc2 { animation: slide 2.5s ease-in-out infinite alternate; }
-.bgc3 { animation: slide 3.0s ease-in-out infinite alternate; }
-.bgc4 { animation: slide 3.5s ease-in-out infinite alternate; }
-.bgc5 { animation: slide 4.0s ease-in-out infinite alternate; }
-.bg {
-	opacity: .25;
-	background: linear-gradient(-60deg, #c9e 50%, #75b 50%);
-}
-.bg.bgc1 { animation-direction: alternate-reverse; }
-.bg.bgc3 { animation-direction: alternate-reverse; }
-.bg2 {
-	opacity: .15;
-	background: linear-gradient(60deg, #c9e 50%, #75b 50%);
-}
-.bg2.bgc3 { animation-direction: alternate-reverse; }
-.bg2.bgc5 { animation-direction: alternate-reverse; }
-@keyframes slide {
-	0% { transform: translateX(-25%); }
-	100% { transform: translateX(25%); }
-}
 	</style>
 </head>
 <body>
@@ -499,17 +470,6 @@ dialog .modal .choice button.action:hover {
 		</p>
 		<h2>bulletins.mom</h2>
 	</div>
-
-	<div class="bg bgc1"></div>
-	<div class="bg bgc2"></div>
-	<div class="bg bgc3"></div>
-	<div class="bg bgc4"></div>
-	<div class="bg bgc5"></div>
-	<div class="bg2 bgc1"></div>
-	<div class="bg2 bgc2"></div>
-	<div class="bg2 bgc3"></div>
-	<div class="bg2 bgc4"></div>
-	<div class="bg2 bgc5"></div>
 
 	<div id="forms" style="--form: 0;">
 		<div class="wrapper"><div class="form" id="front">
