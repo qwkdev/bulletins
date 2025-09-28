@@ -7,9 +7,12 @@
 
 	<style>
 :root {
-	--forms-width: 40vw;
-	--forms-height: 87vh;
-	--margin: 1vw;
+	--vw: 1vw;
+	--vh: 1vh;
+
+	--forms-width: calc(40 * var(--vw));
+	--forms-height: calc(87 * var(--vh));
+	--margin: var(--vw);
 	--border: #0013;
 	--border-focus: #0016;
 	--hover: #00001117;
@@ -27,8 +30,8 @@ body {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100vw;
-	height: 100vh;
+	width: calc(100 * var(--vw));
+	height: calc(100 * var(--vh));
 	background: #fff;
 	z-index: 10000;
 }
@@ -38,39 +41,39 @@ body {
 	left: 50%;
 	transform: translate(-50%, -50%);
 	margin: 0;
-	width: 70vw;
+	width: calc(70 * var(--vw));
 	font-weight: 500;
 	font-family: Arial;
-	font-size: 5vw;
+	font-size: calc(5 * var(--vw));
 	text-align: center;
 	color: #000;
 }
 #mobile-wall h2 {
 	position: absolute;
-	bottom: 1vw;
+	bottom: var(--vw);
 	left: 50%;
 	transform: translateX(-50%);
 	margin: 0;
-	width: 100vw;
+	width: calc(100 * var(--vw));
 	font-weight: 500;
 	font-family: monospace;
-	font-size: 4vw;
+	font-size: calc(4 * var(--vw));
 	text-align: center;
 	color: #0007;
 }
-@media only screen and (max-width: 95vh) {
+@media only screen and (max-aspect-ratio: 1/1) {
 	#mobile-wall {
-			display: block;
+		display: block;
 	}
 }
 #top {
 	position: absolute;
 	top: 0;
 	right: 0;
-	width: calc(100vw - var(--forms-width));
-	height: calc(10vh - var(--margin));
+	width: calc((100 * var(--vw)) - var(--forms-width));
+	height: calc((10 * var(--vh)) - var(--margin));
 	background: #fff;
-	border-bottom-left-radius: 1vw;
+	border-bottom-left-radius: var(--vw);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -78,29 +81,30 @@ body {
 	padding: calc(var(--margin) * 0.75);
 	gap: calc(var(--margin) * 0.75);
 }
+
 #top h1 {
 	margin: 0 var(--margin);
 	font-family: monospace;
 	font-weight: 500;
-	font-size: 2vh;
+	font-size: calc(2 * var(--vh));
 	transform: translateY(-12%);
 }
 #top button {
 	background: none;
 	width: 100%;
 	height: 100%;
-	font-size: 1.5vh;
-	border-radius: .5vw;
-	border: 1px solid var(--border);
+	font-size: calc(1.5 * var(--vh));
+	border-radius: calc(.5 * var(--vw));
+	border: calc(.05 * var(--vw)) solid var(--border);
 }
 #embed {
 	position: absolute;
 	bottom: 0;
 	right: 0;
-	width: calc(100vw - var(--forms-width));
-	height: 90vh;
+	width: calc((100 * var(--vw)) - var(--forms-width));
+	height: calc(90 * var(--vh));
 	background: #fff;
-	border-top-left-radius: 1vw;
+	border-top-left-radius: var(--vw);
 	border: none;
 }
 #forms {
@@ -115,7 +119,7 @@ body {
 	grid-template-columns: repeat(3, var(--forms-width));
 }
 #forms .wrapper {
-	border-radius: 1vw;
+	border-radius: var(--vw);
 	width: calc(100% - (var(--margin) * 2));
 	height: var(--forms-height);
 	margin: 0 var(--margin);
@@ -147,14 +151,14 @@ body {
 	width: 100%;
 	height: max-content;
 	margin: 0;
-	border-radius: .5vw;
-	border: 1px solid var(--border);
-	padding: .5vw;
+	border-radius: calc(.5 * var(--vw));
+	border: calc(.05 * var(--vw)) solid var(--border);
+	padding: calc(.5 * var(--vw));
 	box-sizing: border-box;
 }
 .form input, .form textarea, .modal input, .modal textarea {
-	border: 1px solid var(--border);
-	border-radius: .5vw;
+	border: calc(.05 * var(--vw)) solid var(--border);
+	border-radius: calc(.5 * var(--vw));
 	background: #fff;
 }
 .form input:focus, .form textarea:focus, .modal input:focus, .modal textarea:focus {
@@ -163,63 +167,63 @@ body {
 }
 .form textarea, .modal textarea {
 	margin: 0;
-	padding: .5vw;
+	padding: calc(.5 * var(--vw));
 	box-sizing: border-box;
 }
 .form .header, .modal .header {
 	font-family: Arial;
-	padding-left: .7vw;
+	padding-left: calc(.7 * var(--vw));
 	font-weight: 700;
 }
 .form h1.header, .modal h1.header {
-	font-size: 1.5vw;
+	font-size: calc(1.5 * var(--vw));
 }
 .form p.header, .modal p.header {
-	font-size: 1vw;
+	font-size: var(--vw);
 	text-align: center;
 }
 .form .value-wrap, .modal .value-wrap {
 	display: flex;
 	align-items: center;
-	gap: .25vw;
+	gap: calc(.25 * var(--vw));
 }
 .form .value, .form .inner-value, .modal .value, .modal .inner-value {
-	padding-left: .7vw;
+	padding-left: calc(.7 * var(--vw));
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 }
 .form .value p, .form .value input[type="text"], .form .value input[type="number"], .form .value span:not(.slider), .form .inner-value p, .form .inner-value input[type="text"], .form .inner-value input[type="number"], .form .inner-value span:not(.slider), .modal .value p, .modal .value input[type="text"], .modal .value input[type="number"], .modal .value span:not(.slider), .modal .inner-value p, .modal .inner-value input[type="text"], .modal .inner-value input[type="number"], .modal .inner-value span:not(.slider) {
 	margin: 0;
-	font-size: .7vw;
+	font-size: calc(.7 * var(--vw));
 	font-family: Arial;
 }
 .form .value p, .form .inner-value p, .modal .value p, .modal .inner-value p {
-	font-size: .8vw;
+	font-size: calc(.8 * var(--vw));
 }
 .form .value input[type="text"], .form .value input[type="number"], .form .inner-value input[type="text"], .form .inner-value input[type="number"], .modal .value input[type="text"], .modal .value input[type="number"], .modal .inner-value input[type="text"], .modal .inner-value input[type="number"] {
-	width: 5vw;
-	height: 1.5vw;
-	padding-left: .4vw;
+	width: calc(5 * var(--vw));
+	height: calc(1.5 * var(--vw));
+	padding-left: calc(.4 * var(--vw));
 }
 .form .value button, .form .inner-value button, .modal .value button, .modal .inner-value button {
-	width: 1vw;
-	height: 1vw;
+	width: var(--vw);
+	height: var(--vw);
 	font-family: monospace;
-	font-size: .7vw;
+	font-size: calc(.7 * var(--vw));
 	line-height: 0;
 	background: none;
-	border-radius: .25vw;
-	border: 1px solid var(--border);
+	border-radius: calc(.25 * var(--vw));
+	border: calc(.05 * var(--vw)) solid var(--border);
 }
 .form .value button:hover, .form .inner-value button:hover, .modal .value button:hover, .modal .inner-value button:hover {
 	background: var(--hover);
 }
 .form .value label, .form .inner-value label, .modal .value label, .modal .inner-value label {
-	--slider-margin: .25vw;
-	--slider-width: 3vw;
-	--slider-height: 1.5vw;
-	--slider-padding: .2vw;
+	--slider-margin: calc(.25 * var(--vw));
+	--slider-width: calc(3 * var(--vw));
+	--slider-height: calc(1.5 * var(--vw));
+	--slider-padding: calc(.2 * var(--vw));
 	position: relative;
 	width: var(--slider-width);
 	height: var(--slider-height);
@@ -259,19 +263,19 @@ body {
 	transform: translateX(calc(var(--slider-width) - var(--slider-height)));
 }
 .form .inner-value, .modal .inner-value {
-	padding-left: .2vw;
+	padding-left: calc(.2 * var(--vw));
 }
 .form .text textarea, .modal .text textarea {
 	width: 100%;
 	resize: none;
-	font-size: .8vw;
-	margin-top: .6vw;
+	font-size: calc(.8 * var(--vw));
+	margin-top: calc(.6 * var(--vw));
 	font-family: Arial;
 }
 .form .justtext, .modal .justtext {
 	width: 100%;
 	resize: none;
-	font-size: .8vw;
+	font-size: calc(.8 * var(--vw));
 	font-family: Arial;
 }
 .form .collapse, .form .multi, .modal .collapse, .modal .multi {
@@ -306,10 +310,10 @@ body {
 }
 .form .multi-add, .modal .multi-add {
 	background: none;
-	font-size: 2vw;
+	font-size: calc(2 * var(--vw));
 	margin: 0;
 	padding: 0;
-	padding-bottom: .3vw;
+	padding-bottom: calc(.3 * var(--vw));
 	font-family: monospace;
 }
 .form .multi-add:hover, .modal .multi-add:hover {
@@ -319,8 +323,8 @@ dialog {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100vw;
-	height: 100vh;
+	width: calc(100 * var(--vw));
+	height: calc(100 * var(--vh));
 	background: #0017;
 }
 dialog .modal {
@@ -328,13 +332,13 @@ dialog .modal {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	width: 30vw;
+	width: calc(30 * var(--vw));
 	height: max-content;
-	max-height: 80vh;
+	max-height: calc(80 * var(--vh));
 	box-sizing: border-box;
 	padding: var(--margin);
 	background: #ffffff;
-	border-radius: 1vw;
+	border-radius: var(--vw);
 }
 dialog .modal button:focus {
 	outline: none;
@@ -345,15 +349,15 @@ dialog .modal h1.header {
 dialog .modal .value .date-input {
 	display: flex;
 	align-items: center;
-	gap: .25vw;
+	gap: calc(.25 * var(--vw));
 }
 dialog .modal .value .date-input input[type="number"] {
-	width: 3vw;
+	width: calc(3 * var(--vw));
 }
 dialog .modal .value .value-wrap button.action {
-	padding: 0 1vw;
+	padding: 0 var(--vw);
 	width: max-content;
-	height: 1.5vw;
+	height: calc(1.5 * var(--vw));
 	font-family: Arial;
 	background: #07f;
 	color: #fff;
@@ -371,15 +375,15 @@ dialog .modal .choice {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	gap: .25vw;
+	gap: calc(.25 * var(--vw));
 }
 dialog .modal .choice button {
 	width: 100%;
-	height: 2.5vw;
-	border-radius: .5vw;
-	border: 1px solid var(--border);
+	height: calc(2.5 * var(--vw));
+	border-radius: calc(.5 * var(--vw));
+	border: calc(.05 * var(--vw)) solid var(--border);
 	background: none;
-	font-size: 1vw;
+	font-size: var(--vw);
 	margin: 0;
 	padding: 0;
 	font-family: Arial;
@@ -398,8 +402,8 @@ dialog .modal .choice button.action:hover {
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 100vw;
-	height: 100vh;
+	width: calc(100 * var(--vw));
+	height: calc(100 * var(--vh));
 	background: #001a;
 }
 #wait h1 {
@@ -409,22 +413,22 @@ dialog .modal .choice button.action:hover {
 	transform: translate(-50%, -50%);
 	margin: 0;
 	padding: var(--margin) calc(var(--margin) * 2);
-	border-radius: 1vw;
-	font-size: 5vh;
+	border-radius: var(--vw);
+	font-size: calc(5 * var(--vh));
 	font-family: Arial;
 	text-align: center;
 	z-index: 100;
 	background: #fff;
 }
 #buttons {
-	--outer-radius: 1vw;
-	--button-height: calc(100vh - var(--forms-height) - (var(--margin) * 2.5));
+	--outer-radius: var(--vw);
+	--button-height: calc((100 * var(--vh)) - var(--forms-height) - (var(--margin) * 2.5));
 	width: calc(var(--forms-width) - (var(--margin) * 2));
 	height: var(--button-height);
 	position: absolute;
 	bottom: var(--margin);
 	left: var(--margin);
-	border-radius: 1vw;
+	border-radius: var(--vw);
 	display: flex;
 	align-items: center;
 	gap: calc(var(--margin) / 2);
@@ -432,11 +436,11 @@ dialog .modal .choice button.action:hover {
 #buttons button {
 	height: var(--button-height);
 	background: #fff;
-	border-radius: .5vw;
+	border-radius: calc(.5 * var(--vw));
 	border: none;
 }
 #buttons #prev, #buttons #next {
-	width: 5vw;
+	width: calc(5 * var(--vw));
 	font-family: monospace;
 	font-size: calc(var(--button-height) * 0.5);
 	padding-bottom: calc(var(--button-height) * 0.12);
@@ -456,6 +460,7 @@ dialog .modal .choice button.action:hover {
 	border-bottom-left-radius: var(--outer-radius) !important;
 }
 .bg, .bg2 {
+	display: none;
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -891,6 +896,13 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	</div>
 
 	<script>
+		function setVsize() {
+			document.documentElement.style.setProperty('--vw', window.innerWidth * 0.01 + 'px');
+			document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
+		}
+		window.addEventListener('resize', setVsize);
+		setVsize();
+
 		const SERVER_URL = 'https://bulletins.pythonanywhere.com';
 		const SCRAPE_SERVER_URL = 'https://universalis.vercel.app/api';
 
