@@ -856,6 +856,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	</div>
 
 	<script>
+		//! TODO: Fix load template loading literal <br>'s
+
 		function setVsize() {
 			document.documentElement.style.setProperty('--vw', window.innerWidth * 0.01 + 'px');
 			document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
@@ -1089,7 +1091,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				ele.checked = value; 
 				return;
 			}
-			ele.value = value;
+			ele.value = String(value).replaceAll('<br>', '\n');
 		}
 		function setMulti(multiId, list, ...names) {
 			const multi = document.getElementById(multiId);

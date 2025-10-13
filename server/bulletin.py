@@ -10,7 +10,7 @@ from docx.enum.table import WD_ROW_HEIGHT_RULE, WD_CELL_VERTICAL_ALIGNMENT
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-GLOBAL_PATH: str = '/home/bulletins/mysite/'
+GLOBAL_PATH: str = '' # '/home/bulletins/mysite/'
 GLOBAL_FONT: str = 'Calibri'
 
 fancyq = {
@@ -204,7 +204,7 @@ def tomm(val: int | float) -> int | float:
     return val / 36000
 def topt(val: int | float) -> int | float:
     return val / 12700
-def totwips(val: int | float) -> int | float:
+def toDXA(val: int | float) -> int | float:
     return val / 635
 def cellMargin(val: int | float) -> int | float:
     return 350 * val
@@ -265,43 +265,71 @@ def build(
     a5table = doc.add_table(rows=1, cols=3)
     a5table.autofit = False
     a5table.allow_autofit = False
+
     a5table.rows[0].height = section.page_height - section.top_margin - section.bottom_margin
     a5table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
-    a5table.cell(0, 0).width = left_half_width
-    a5table.cell(0, 1).width = sum(middle_margin)
-    a5table.cell(0, 2).width = right_half_width
+    a5table.cell(0, 0).width = int(left_half_width)
+    a5table.columns[0].width = int(left_half_width)
+    a5table.cell(0, 1).width = int(sum(middle_margin))
+    a5table.columns[1].width = int(sum(middle_margin))
+    a5table.cell(0, 2).width = int(right_half_width)
+    a5table.columns[2].width = int(right_half_width)
 
     remove_cell_borders(a5table.cell(0, 1))
     normalize_cell(a5table.cell(0, 0))
     normalize_cell(a5table.cell(0, 2))
 
-    set_table_borders(a5table, color='000000', size=4)
+    set_table_borders(a5table, '000000', 4, True)
 
-    info_data = [(i[0], i[1], i[2].replace('\n', '')) for i in info_data]
-
+    info_rows = 0
+    for t in info_data:
+        info_rows += len(t)
+    
     info_table = a5table.cell(0, 2).add_table(rows=len(info_data) + 1, cols=1)
     info_table.autofit = True
     info_table.allow_autofit = True
 
-    total = 0
-    for n, ((align, lines, txt), row) in enumerate(zip(info_data, info_table.rows[1:])):
-        normalize_cell(row.cells[0], margins=False)
+    total, n = 0, 0
+    for m, (side, *info) in enumerate(info_data):
+        trow = info_table.rows[1:][m]
+        normalize_cell(trow.cells[0])
+        ttable = trow.cells[0].add_table(rows=len(info), cols=2 if side else 1)
 
         cell_margin = 70
-        set_cell_margins(row.cells[0], cell_margin, 80, cell_margin, 80)
-        height = Pt(info_size * 1.22 * lines) + cellMargin(2 * cell_margin)
-        if n != len(info_data) - 1:
-            row.height = height
-            row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-        row.cells[0].width = right_half_width
-        parseText(row.cells[0], txt, info_size, 1, center=align == 1)
 
-        total += height + cellMargin(2 * cell_margin)
+        for tm, (align, lines, txt) in enumerate(info):
+            row = ttable.rows[tm]
+            normalize_cell(row.cells[0], margins=False)
+            
+            set_cell_margins(row.cells[0], cell_margin, 80, cell_margin, 80)
+            height = Pt(info_size * 1.22 * lines) + cellMargin(2 * cell_margin)
+            if n != info_rows - 1:
+                row.height = height
+                row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
+            row.cells[0].width = right_half_width
+            parseText(row.cells[0], txt, info_size, 1, center=align == 1)
+
+            total += height + cellMargin(2 * cell_margin)
+            n += 1
+
+        if side:
+            merged = ttable.cell(0, 1)
+            for row in range(1, len(ttable.rows)):
+                merged = merged.merge(ttable.cell(row, 1))
+
+            normalize_cell(merged, margins=False)
+            set_cell_margins(merged, cell_margin, 80, cell_margin, 80)
+            parseText(merged, side, info_size, 1, center=True)
+
+        set_table_borders(ttable, '000000', 4, False)
 
     info_table.rows[0].height = a5table.rows[0].height - total
     front_page = info_table.rows[0].cells[0]
 
+    set_table_borders(info_table, '000000', 4, False)
+
+    normalize_cell(front_page)
     parseText(front_page, title.replace('\n', ''), title_size, 1.3, 20, center=True)
 
     logop = front_page.add_paragraph()
@@ -340,7 +368,7 @@ def build(
             set_cell_margins(cell, 150, 0, 50, 0)
             parseText(cell, txt, mass_info_size, 1, center=True)
 
-    set_table_borders(info_table, color='000000', size=4, outer=False)
+        # set_table_borders(mass_table, '000000', 4, False)
 
     data = [(i[0], i[1], i[2].replace('\n', '')) for i in data]
 
@@ -385,9 +413,12 @@ def build(
     reading_table.rows[0].height = section2.page_height - reading_top_margin - Mm(8)
     reading_table.rows[0].height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
 
-    reading_table.cell(0, 0).width = left_half_width
-    reading_table.cell(0, 1).width = sum(middle_margin)
-    reading_table.cell(0, 2).width = right_half_width
+    reading_table.cell(0, 0).width = int(left_half_width)
+    reading_table.columns[0].width = int(left_half_width)
+    reading_table.cell(0, 1).width = int(sum(middle_margin))
+    reading_table.columns[1].width = int(sum(middle_margin))
+    reading_table.cell(0, 2).width = int(right_half_width)
+    reading_table.columns[2].width = int(right_half_width)
 
     remove_cell_borders(reading_table.cell(0, 1))
 
@@ -405,6 +436,7 @@ def build(
         if not reading.get('include', True):
             continue
         alt_reading = reading['alt'] and reading['type'] in shown_types
+
         safe_normalize_page(reading['left'], reading_page_normalized, reading_table)
 
         reading_page = reading_table.cell(0, 0 if reading['left'] else 2)
@@ -413,11 +445,11 @@ def build(
             + ('</b>  <i>wording may differ if sung</i>' if reading['type'] in ['psalm', 'acclamation'] and not alt_reading and reading['sameline'] else '</b>')
             + '<_tab>'
             + reading['ref'],
-        reading_heading_size, 1, pbottom=reading_heading_spacing, left_right=left_half_width)
+        reading_heading_size, 1, pbottom=reading_heading_spacing, left_right=(left_half_width if reading['left'] else right_half_width))
         shown_types.append(reading['type'])
 
         if reading['title']:
-            parseText(reading_page, '<b><i>' + fancyq['"'][0] + reading['title'] + fancyq['"'][1] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
+            parseText(reading_page, '<b><i>' + reading['title'] + '</i></b>', reading_heading_size, 1, pbottom=reading_heading_spacing)
         if reading['type'] in ['reading1', 'reading2', 'gospel']:
             parseText(reading_page, reading['text'], reading['size'], 1, pbottom=reading['margin'])
         if reading['type'] in ['psalm', 'acclamation']:
@@ -441,3 +473,31 @@ def build(
         copyright_size, 1)
 
     doc.save(GLOBAL_PATH+OUTPUT_PATH)
+
+import json
+with open('test.json', encoding='utf-8') as f:
+    data = json.load(f)
+
+build(
+    OUTPUT_PATH='output.docx',
+    front_page_margins=(data['front']['top-margin'], data['front']['left-margin']),
+    info_data=data['front']['latest-info'],
+    info_size=data['front']['latest-info-size'],
+    title=data['front']['title'],
+    title_size=data['front']['title-size'],
+    church_title=data['front']['church-title'],
+    church_title_size=data['front']['church-title-size'],
+    church_info=data['front']['church-info'],
+    church_info_size=data['front']['church-info-size'],
+    mass_info=data['front']['mass-info'],
+    mass_info_size=data['front']['mass-info-size'],
+    data=data['back'],
+    readings=data['readings']['readings'],
+    reading_margins=(data['readings']['options']['top-margin'], data['readings']['options']['left-margin']),
+    reading_heading_spacing=data['readings']['options']['heading-spacing'],
+    reading_heading_size=data['readings']['options']['heading-size'],
+    copyright_size=data['readings']['options']['copyright-size'],
+    copyright_spacing=data['readings']['options']['copyright-spacing'],
+    copyright_page=data['readings']['options']['copyright-page'],
+    dpa_page=data['readings']['options']['dpa-page'],
+)
