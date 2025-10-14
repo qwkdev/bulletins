@@ -18,7 +18,7 @@
 	--hover: #00001117;
 	--action: #07f;
 }
-.template {
+.template, .template2 {
 	display: none !important;
 }
 body {
@@ -320,6 +320,12 @@ body {
 .form .multi-add:hover, .modal .multi-add:hover {
 	background: var(--hover);
 }
+.multi-multi-add {
+	width: 100%;
+	display: grid;
+	gap: calc(.5 * var(--vw));
+	grid-template-columns: 4fr 1fr;
+}
 dialog {
 	position: absolute;
 	top: 0;
@@ -555,8 +561,16 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<span>pt</span>
 					</div>
 				</div>
+				<div class="value">
+					<p>Separator Width:</p>
+					<div class="value-wrap">
+						<input type="number" value="30" data-name="latest-info-side-width">
+						<span>%</span>
+					</div>
+				</div>
 				<div class="multi" id="latest-info">
 					<div class="template text">
+						<input type="hidden" data-name="type" value="1">
 						<div class="inner-value">
 							<div class="value-wrap">
 								<span>Align Left</span>
@@ -577,7 +591,34 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						</div>
 						<textarea rows="2" data-name="text"><b></b></textarea>
 					</div>
+					<div class="template2 text">
+						<input type="hidden" data-name="type" value="2">
+						<div class="inner-value">
+							<div class="value-wrap">
+								<p><b>SEPARATOR</b></p>
+							</div>
+							<div class="value-wrap">
+								<span>START</span>
+								<label>
+									<input type="checkbox" data-name="pos" onchange="toggleSep(this)">
+									<span class="slider"></span>
+								</label>
+								<span>END</span>
+							</div>
+							<div class="value-wrap">
+								<p data-name="size-label">Size:</p>
+								<input type="number" value="10" data-name="size">
+								<span data-name="size-label">pt</span>
+								
+								<button onclick="multimove(-1, this)">&#x2191;</button>
+								<button onclick="multimove(1, this)">&#x2193;</button>
+								<button onclick="multiremove(this)">X</button>
+							</div>
+						</div>
+						<textarea rows="2" data-name="text"><i></i></textarea>
+					</div>
 					<div class="text">
+						<input type="hidden" data-name="type" value="1">
 						<div class="inner-value">
 							<div class="value-wrap">
 								<span>Align Left</span>
@@ -599,7 +640,10 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 						<textarea rows="2" data-name="text"><i>For latest parish information please visit www.stjosephschurchmilngavie.co.uk</i></textarea>
 					</div>
 				</div>
-				<button class="multi-add" onclick="multiadd('latest-info', true)">+</button>
+				<div class="multi-multi-add">
+					<button class="multi-add" onclick="multiadd('latest-info', true)">+</button>
+					<button class="multi-add" onclick="multiadd('latest-info', true, 2)">SEP</button>
+				</div>
 			</div>
 		</div></div>
 		<div class="wrapper"><div class="form" id="info">
@@ -856,8 +900,6 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 	</div>
 
 	<script>
-		//! TODO: Fix load template loading literal <br>'s
-
 		function setVsize() {
 			document.documentElement.style.setProperty('--vw', window.innerWidth * 0.01 + 'px');
 			document.documentElement.style.setProperty('--vh', window.innerHeight * 0.01 + 'px');
@@ -924,19 +966,35 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			nextBtn.hidden = num == 2;
 		}
 
+		function toggleSep(e) {
+			const parent = e.parentElement.parentElement.parentElement.parentElement;
+			Array.from(parent.querySelectorAll(`
+textarea[data-name="text"], 
+input[data-name="size"], 
+p[data-name="size-label"], 
+span[data-name="size-label"]
+			`)).forEach(i => {
+				i.hidden = e.checked;
+			});
+		}
+
 		function collapse(collapseId) {
 			const col = document.getElementById(collapseId);
 			col.hidden = !col.hidden;
 		}
 
-		function multiadd(multiId, reverse=false) {
+		function multiadd(multiId, reverse=false, tnum=1) {
+			console.log(multiId, reverse, tnum);
 			const multi = document.getElementById(multiId);
 
-			const template = multi.querySelector('.template');
+			const template = multi.querySelector(`.template${tnum === 1 ? '' : tnum}`);
+			console.log(template);
 			const clone = template.cloneNode(true);
-			clone.classList.remove('template');
+			clone.classList.remove(`template${tnum === 1 ? '' : tnum}`);
 
-			if (reverse) multi.insertBefore(clone, multi.children[1]);
+			if (reverse) multi.insertBefore(
+				clone, Array.from(multi.querySelectorAll(`.template, .template2`)).at(-1).nextElementSibling
+			);
 			else multi.appendChild(clone);
 
 			return clone;
@@ -949,10 +1007,22 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			if (dir == -1) {
 				const prev = ele.previousElementSibling;
-				if (prev) ele.parentNode.insertBefore(ele, prev);
+				if (prev) {
+					if (
+						prev.classList.contains('template') ||
+						prev.classList.contains('template2')
+					) return;
+					ele.parentNode.insertBefore(ele, prev);
+				}
 			} else if (dir == 1) {
 				const next = ele.nextElementSibling;
-				if (next) ele.parentNode.insertBefore(next, ele);
+				if (next) {
+					if (
+						next.classList.contains('template') ||
+						next.classList.contains('template2')
+					) return;
+					ele.parentNode.insertBefore(next, ele);
+				}
 			}
 		}
 
@@ -1078,7 +1148,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 		function getMulti(multiId, ...names) {
 			const multi = document.getElementById(multiId);
-			const items = multi.querySelectorAll(':scope > div:not(.template)');
+			const items = multi.querySelectorAll(':scope > div:not(.template):not(.template2)');
 			if (!items) return [];
 
 			if (names.length === 1) return Array.from(items).map(ele => getValue(ele, names[0][0], names[0][1]));
@@ -1095,7 +1165,7 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 		}
 		function setMulti(multiId, list, ...names) {
 			const multi = document.getElementById(multiId);
-			multi.querySelectorAll(':scope > div:not(.template)').forEach(ele => ele.remove());
+			multi.querySelectorAll(':scope > div:not(.template):not(.template2)').forEach(ele => ele.remove());
 			if (names.length === 1) {
 				list.forEach(item => {
 					const newValue = multiadd(multiId);
@@ -1138,7 +1208,8 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 				'church-info': parseText,
 				'church-info-size': parseFloat,
 				'mass-info-size': parseFloat,
-				'latest-info-size': parseFloat
+				'latest-info-size': parseFloat,
+				'latest-info-side-width': parseFloat
 			},
 			readings: {
 				'top-margin': parseFloat,
@@ -1172,7 +1243,24 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 			}
 
 			output.front['mass-info'] = getMulti('mass-info', ['text', parseText]);
-			output.front['latest-info'] = getMulti('latest-info', ['centered', c => c ? 1 : 0], ['lines', parseInt], ['text', parseText]);
+			const latestSection = getMulti(
+				'latest-info', ['type', parseInt], ['text', parseText],
+				['centered', c => c ? 1 : 0], ['lines', parseInt],
+				['pos', c => c ? 1 : 0], ['size', parseFloat]
+			);
+
+			output.front['latest-info'] = []
+			let temp = [[0, '']];
+			latestSection.forEach(e => {
+				if (e[0] === 1) {
+					temp.push([e[2], e[3], e[1]]);
+				} else {
+					output.front['latest-info'].push(temp);
+					temp = e[4] === 1 ? [[0, '']] : [[e[5], e[1]]];
+				}
+			});
+			output.front['latest-info'].push(temp);
+			output.front['latest-info'] = output.front['latest-info'].filter(e => e.length !== 1);
 
 			const readingCollapses = readingSection.querySelectorAll('.collapse[data-name="reading-collapse"]');
 			readingCollapses.forEach(ele => {
@@ -1203,6 +1291,9 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 
 			return output;
 		}
+		function debug() {
+			console.table(build()['front']['latest-info']);
+		}
 
 		function loadTemplate(template) {
 			const front = document.getElementById('front');
@@ -1213,7 +1304,27 @@ Website: www.stjosephschurchmilngavie.co.uk</textarea>
 					}
 				}
 				setMulti('mass-info', template.front['mass-info'] || [], 'text');
-				setMulti('latest-info', template.front['latest-info'].map(l => [l[0] === 1, l[1], l[2]]) || [], 'centered', 'lines', 'text');
+
+				const latestMulti = document.getElementById('latest-info');
+				latestMulti.querySelectorAll(':scope > div:not(.template):not(.template2)').forEach(ele => ele.remove());
+				template.front['latest-info'].forEach((e, n) => {
+					if (e[0][1] || n !== 0) {
+						const newValue = multiadd('latest-info', false, 2);
+						setValue(newValue, 'size', e[0][0]);
+						setValue(newValue, 'text', e[0][1]);
+
+						if (!e[0][1]) {
+							setValue(newValue, 'pos', true);
+							toggleSep(newValue.querySelector('input[data-name="pos"]'));
+						}
+					}
+					e.slice(1).forEach(item => {
+						const newValue = multiadd('latest-info');
+						setValue(newValue, 'centered', item[0]);
+						setValue(newValue, 'lines', item[1]);
+						setValue(newValue, 'text', item[2]);
+					});
+				});
 			}
 			if (template.back) {
 				setMulti('notices', template.back || [], 'size', 'margins', 'text');

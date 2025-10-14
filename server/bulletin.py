@@ -216,6 +216,7 @@ def build(
     front_page_margins: tuple[int | float, int | float],
     info_data: list[tuple[int, str]],
     info_size: int | float,
+    info_side_width: int | float,
     title: str,
     title_size: int | float,
     church_title: str,
@@ -290,14 +291,22 @@ def build(
     info_table.autofit = True
     info_table.allow_autofit = True
 
+    side_width = info_side_width / 100
+
     total, n = 0, 0
-    for m, (side, *info) in enumerate(info_data):
+    for m, ((side_size, side), *info) in enumerate(info_data):
         trow = info_table.rows[1:][m]
         normalize_cell(trow.cells[0])
         ttable = trow.cells[0].add_table(rows=len(info), cols=2 if side else 1)
 
         cell_margin = 70
 
+        if side:
+            ttable.columns[0].width = int(right_half_width * (1-side_width))
+            ttable.columns[1].width = int(right_half_width * side_width)
+        else:
+            ttable.columns[0].width = int(right_half_width)
+        
         for tm, (align, lines, txt) in enumerate(info):
             row = ttable.rows[tm]
             normalize_cell(row.cells[0], margins=False)
@@ -307,7 +316,7 @@ def build(
             if n != info_rows - 1:
                 row.height = height
                 row.height_rule = WD_ROW_HEIGHT_RULE.EXACTLY
-            row.cells[0].width = right_half_width
+            row.cells[0].width = right_half_width * (1-side_width) if side else right_half_width
             parseText(row.cells[0], txt, info_size, 1, center=align == 1)
 
             total += height + cellMargin(2 * cell_margin)
@@ -320,7 +329,9 @@ def build(
 
             normalize_cell(merged, margins=False)
             set_cell_margins(merged, cell_margin, 80, cell_margin, 80)
-            parseText(merged, side, info_size, 1, center=True)
+            merged.width = right_half_width * side_width
+
+            parseText(merged, side, side_size, 1, center=True)
 
         set_table_borders(ttable, '000000', 4, False)
 
@@ -483,6 +494,7 @@ build(
     front_page_margins=(data['front']['top-margin'], data['front']['left-margin']),
     info_data=data['front']['latest-info'],
     info_size=data['front']['latest-info-size'],
+    info_side_width=data['front']['latest-info-side-width'],
     title=data['front']['title'],
     title_size=data['front']['title-size'],
     church_title=data['front']['church-title'],

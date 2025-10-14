@@ -10,6 +10,7 @@
 		"church-info-size": 10,
 		"mass-info-size": 10,
 		"latest-info-size": 10,
+		"latest-info-side-width": 30,
 		"mass-info": [
 			"<b>SATURDAY VIGIL MASS</b><br><b>St Joseph’s</b> 4.30 pm (confessions from 4 pm)<br>& <b>St. Andrew’s</b> 6 pm",
 			"<b>SUNDAY MASS</b><br><b>St. Andrew’s</b> 10 am (confessions from 9.10 am) & <b>St Joseph’s</b> 11.30 am",
@@ -17,7 +18,7 @@
 		],
 		"latest-info": [
 			[
-				"",
+				[0, ""],
 				[
 					0,
 					1,
@@ -25,7 +26,7 @@
 				]
 			],
 			[
-				"<b>hey</b>",
+				[8, "<b>hey 1</b><br><b>hey 2</b><br><b>hey 3</b>"],
 				[
 					0,
 					1,
@@ -38,7 +39,7 @@
 				]
 			],
 			[
-				"",
+				[0, ""],
 				[
 					1,
 					1,

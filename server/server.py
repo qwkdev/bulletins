@@ -39,6 +39,7 @@ def build_file():
         front_page_margins=(data['front']['top-margin'], data['front']['left-margin']),
         info_data=data['front']['latest-info'],
         info_size=data['front']['latest-info-size'],
+        info_side_width=data['front']['latest-info-side-width'],
         title=data['front']['title'],
         title_size=data['front']['title-size'],
         church_title=data['front']['church-title'],
